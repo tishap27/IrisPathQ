@@ -1,0 +1,6 @@
+﻿flight_id,origin,destination,departure_time,aircraft_type
+UA123,SFO,JFK,8:00,B737
+DL456,LAX,BOS,9:30,A320
+AA789,ORD,MIA,10:15,B777
+WN234,DEN,PHX,11:00,B737
+UA567,SEA,ATL,12:30,B737

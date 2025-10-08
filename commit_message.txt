@@ -1,0 +1,5 @@
+add: c files for data loading, route generation, and cost matrix export for quantum optimization
+
+- Load flights, waypoints, and weather data from CSV files
+- Generate alternative routes with distance and fuel calculations
+- Build and export cost matrix files for quantum processing
