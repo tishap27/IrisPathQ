@@ -1,0 +1,4 @@
+latitude,longitude,wind_speed,wind_direction,weather_type
+44,-80,30,180,RAIN
+49,-123,15,270,CLOUDY
+51,-114,25,90,CLEAR
