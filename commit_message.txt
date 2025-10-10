@@ -1,5 +1,6 @@
-add: c files for data loading, route generation, and cost matrix export for quantum optimization
+add: test.ipynb simpleTest.c to test C and Qiskit integration in jupyter notebook
 
-- Load flights, waypoints, and weather data from CSV files
-- Generate alternative routes with distance and fuel calculations
-- Build and export cost matrix files for quantum processing
+- C program compiles and runs via subprocess
+- Qiskit uses C value to control circuit gates
+- H gates (value > 8) produce random quantum results
+
