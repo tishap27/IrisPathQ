@@ -1,6 +1,11 @@
-add: test.ipynb simpleTest.c to test C and Qiskit integration in jupyter notebook
+refactor: organized notebooks into versioned structure
 
-- C program compiles and runs via subprocess
-- Qiskit uses C value to control circuit gates
-- H gates (value > 8) produce random quantum results
+v0.1 - Integration Testing:
+- Simple C-Qiskit integration test
+- Subprocess compilation-works
+- Quantum circuit controlled by C output
 
+v0.2 - Route Optimizer (initial setup):
+- Project structure for IrisPathQ implementation
+- Verified compilation environment 
+- Next adding classical calculation modules
