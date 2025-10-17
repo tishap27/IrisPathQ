@@ -1,0 +1,16 @@
+# Compiled binaries
+*.exe
+*.o
+*.out
+simpleTest
+test_simple
+route_optimizer
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Temporary files
+*~
+*.tmp
+~$*
