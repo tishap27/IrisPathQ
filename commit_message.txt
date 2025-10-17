@@ -1,11 +1,5 @@
-refactor: organized notebooks into versioned structure
+Add: Core data structures and calculations
 
-v0.1 - Integration Testing:
-- Simple C-Qiskit integration test
-- Subprocess compilation-works
-- Quantum circuit controlled by C output
-
-v0.2 - Route Optimizer (initial setup):
-- Project structure for IrisPathQ implementation
-- Verified compilation environment 
-- Next adding classical calculation modules
+- Define flight, route, waypoint, and weather structures
+- Implement great circle distance calculation and fuel consumption calculations
+- Weather hazard detection --simple detection from csv file for now
