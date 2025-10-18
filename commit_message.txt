@@ -1,5 +1,7 @@
-Add: Core data structures and calculations
+Add: Classical preprocessing modules
 
-- Define flight, route, waypoint, and weather structures
-- Implement great circle distance calculation and fuel consumption calculations
-- Weather hazard detection --simple detection from csv file for now
+- Main program
+- Full compilation and execution workflow
+- Cost matrix generation and export
+- Uses existing project data files
+- Next quantum algorithms on the matrix generated
