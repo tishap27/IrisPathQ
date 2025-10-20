@@ -1,7 +1,6 @@
-Add: Classical preprocessing modules
+Add: C-Python integration test for matrix manipulation
 
-- Main program
-- Full compilation and execution workflow
-- Cost matrix generation and export
-- Uses existing project data files
-- Next quantum algorithms on the matrix generated
+- C program writes a 3x3 matrix to file(matrix.txt)
+- Python script compiles, runs, and reads C output
+- Tested transpose operation on imported matrix
+- Verify NumPy can process C-generated data
