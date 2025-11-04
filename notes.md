@@ -9,4 +9,4 @@
 * Dwave applications: https://www.dwavequantum.com/learn/featured-applications/?industry=Transportation&query=&thirdParty=-1#resource-list
 
 # Binded resources:
-* Project (for test): https://github.com/tishap27/IrisPathQ
+* Project (for test): https://github.com/users/paulobmsousa/projects/4
