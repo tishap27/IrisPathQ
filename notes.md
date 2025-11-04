@@ -7,4 +7,6 @@
 * Open library (OpenQAOA): https://openqaoa.entropicalabs.com
 * Documentation: https://openqaoa.entropicalabs.com/qubit-routing/qaoa-qubit-routing/#qubit-routing-solutions-in-openqaoa
 * Dwave applications: https://www.dwavequantum.com/learn/featured-applications/?industry=Transportation&query=&thirdParty=-1#resource-list
-* 
+
+# Binded resources:
+* Project (for test): https://github.com/tishap27/IrisPathQ
