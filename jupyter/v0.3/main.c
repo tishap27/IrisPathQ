@@ -4,12 +4,27 @@
 */
 
 #include "data_structures.h"
+//function declaration
+void initialization();
 
-/* Main */
+void initialization() {
+    printf("====================================\n");
+    printf("IrisPathQ Route Optimization\n");
+    printf("====================================\n\n");
+
+    ProblemInstance problem;
+    memset(&problem, 0, sizeof(ProblemInstance));
+
+    printf("Loading data...\n");
+    load_flights("data/flights.csv", &problem);
+    load_waypoints("data/waypoints.csv", &problem);
+    load_weather("data/weather.csv", &problem);
+
+}
 int main() {
-
     initialization();
-
+    ProblemInstance problem;
+    memset(&problem, 0, sizeof(ProblemInstance));
     printf("\n====================================\n");
     printf("Generating Routes\n");
     printf("====================================\n\n");
@@ -42,18 +57,3 @@ int main() {
     return 0;
 }
 
-
-void initialization() {
-    printf("====================================\n");
-    printf("IrisPathQ Route Optimization\n");
-    printf("====================================\n\n");
-
-    ProblemInstance problem;
-    memset(&problem, 0, sizeof(ProblemInstance));
-
-    printf("Loading data...\n");
-    load_flights("data/flights.csv", &problem);
-    load_waypoints("data/waypoints.csv", &problem);
-    load_weather("data/weather.csv", &problem);
-
-}
