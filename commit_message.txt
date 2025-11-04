@@ -1,22 +1,13 @@
-Add: QAOA quantum optimizer for route selection
+Add v0.3: A* pathfinding with priority queue implementation
 
-Implement quantum approximate optimization algorithm (QAOA) to solve
-flight route optimization problem. The optimizer:
-
-- Loads cost matrix from C preprocessing (fuel costs + conflict penalties)
-- Encodes route selection as QUBO problem
-- Uses 10-qubit QAOA circuit (2 qubits per flight)
-- Compares quantum solution against classical greedy 
-- Decodes measurement results to extract optimal route combination
-
-Circuit design:
-- Hadamard gates for superposition initialization
-- Variational parameters: γ=1.0, β=0.5 (constant for demonstration)
-- RZ gates for cost Hamiltonian encoding
-- RX gates for mixer Hamiltonian
-- Qiskit Aer simulator with 500 shots
-
-- Currently Quantum solution matches greedy solution as there are no conflicts and simple params introduced
-- Each flight independently picks cheapest route
-
-
+- Implement A* graph search algorithm (astar.c)
+- Add priority queue with f-cost ordering (g + h)
+- Support waypoint network exploration
+- Path reconstruction 
+- Great circle heuristic for route estimation
+- Extend Route structure with waypoint path 
+- Replace greedy selection with A* search
+- Generate optimal routes with cost variants
+- Preserve QAOA quantum optimizer integration
+- Routes currently direct
+- Next will add weather penalties and airway constraints to get multi-waypoint routing
