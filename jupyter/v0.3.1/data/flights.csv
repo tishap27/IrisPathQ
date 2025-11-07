@@ -1,0 +1,6 @@
+﻿flight_id,origin,destination,departure_time,aircraft_type
+AC101,YYZ,YVR,8:00,B737
+WS202,YUL,YYC,9:30,A320
+AC303,YEG,YOW,10:15,B777
+WS404,YWG,YHZ,11:00,B737
+AC505,YYJ,YYT,12:30,B737
