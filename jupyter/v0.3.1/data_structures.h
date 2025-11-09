@@ -80,6 +80,7 @@ int load_flights(const char *filename, ProblemInstance *problem);
 int load_waypoints(const char *filename, ProblemInstance *problem);
 int load_weather(const char *filename, ProblemInstance *problem);
 int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int num_routes);
+void inject_conflicts(ProblemInstance *problem);
 void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matrix_size);
 void export_cost_matrix(double *cost_matrix, int matrix_size, const char *filename);
 void export_full_matrix(double *cost_matrix, int matrix_size, const char *filename);

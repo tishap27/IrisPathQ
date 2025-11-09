@@ -1,13 +1,7 @@
-Add v0.3: A* pathfinding with priority queue implementation
+add: artificial conflict injection for QAOA testing
 
-- Implement A* graph search algorithm (astar.c)
-- Add priority queue with f-cost ordering (g + h)
-- Support waypoint network exploration
-- Path reconstruction 
-- Great circle heuristic for route estimation
-- Extend Route structure with waypoint path 
-- Replace greedy selection with A* search
-- Generate optimal routes with cost variants
-- Preserve QAOA quantum optimizer integration
-- Routes currently direct
-- Next will add weather penalties and airway constraints to get multi-waypoint routing
+- Add inject_conflicts() to create route conflicts
+- Forces Route 0 of Flight N+1 to share a waypoint with Flight N, creating conflict chains
+- Creates chain of conflicts: Flight N <-> Flight N+1
+
+Conflicts are artificial but needed prove QAOA conflict resolution works

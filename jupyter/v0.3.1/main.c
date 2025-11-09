@@ -27,6 +27,9 @@ int main() {
     for (int i = 0; i < problem.num_flights; i++) {
         generate_alternative_routes(&problem, i, num_alternative_routes);
     }
+    //Conflict
+    inject_conflicts(&problem);
+
 
     printf("\n====================================\n");
     printf("Building Cost Matrix\n");

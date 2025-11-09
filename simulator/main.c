@@ -32,6 +32,10 @@ int main() {
         printf("\n");
     }
     
+    //Conflict
+    inject_conflicts(&problem);
+
+
     printf("\n====================================\n");
     printf("Building Cost Matrix \n");
     printf("====================================\n\n");
