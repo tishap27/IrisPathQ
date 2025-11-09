@@ -1,7 +1,5 @@
-add: artificial conflict injection for QAOA testing
+add: conflict penalty in the QAOA optimizer(route_qaoa.py)
 
-- Add inject_conflicts() to create route conflicts
-- Forces Route 0 of Flight N+1 to share a waypoint with Flight N, creating conflict chains
-- Creates chain of conflicts: Flight N <-> Flight N+1
+-Classical greedy now calculates-Fuel costs (diagonal)-Conflict penalties (off-diagonal Q[i,j])
+-QAOA now evaluates: Each flight solution with fuel + conflicts
 
-Conflicts are artificial but needed prove QAOA conflict resolution works

@@ -1,4 +1,3 @@
-%run route_qaoa.py
 
 import numpy as np
 from qiskit import QuantumCircuit, transpile
@@ -23,6 +22,11 @@ try:
     #Intialize Empty matrix 
     cost_matrix = np.zeros((matrix_size, matrix_size))
 
+    # Tracking what  loading
+    num_diagonal = 0
+    num_conflicts = 0
+    total_conflict_penalty = 0
+
     #Now parse the SPARSE matrix ; format: "row,col,value"
     for line in lines[1:]:
         parts = line.strip().split(',')
@@ -30,7 +34,23 @@ try:
             i, j, value = int(parts[0]), int(parts[1]), float(parts[2])
             cost_matrix[i][j] = value
 
+            # Track what we loaded
+            if i == j:
+                num_diagonal += 1
+            else:
+                if value >= 10000:  # Conflict penalty
+                    num_conflicts += 1
+                    total_conflict_penalty += value
+
     print(f"Loaded {matrix_size}*{matrix_size} matrix")
+    print(f"  Diagonal entries (fuel costs): {num_diagonal}")
+    print(f"  Off-diagonal entries (conflicts): {num_conflicts}")
+    print(f"  Total conflict penalty in matrix: {total_conflict_penalty:.0f} kg")
+
+    if num_conflicts == 0:
+        print("WARNING: No conflicts found in matrix!")
+    else:
+        print(f"Conflicts detected - quantum advantage possible!")
 
     # Always run C first(to create the matrix) ; weather will be taken into account before creating the matrix 
 except FileNotFoundError:
@@ -74,12 +94,28 @@ for flight in range(NUM_FLIGHTS):
     classical_solution.append(best_route)
 
 # Calculate total fuel cost
-classical_cost = sum(cost_matrix[r][r] for r in classical_solution)
+classical_fuel = sum(cost_matrix[r][r] for r in classical_solution)
 
+# Calculate conflict penalties (off-diagonal)
+classical_conflicts = 0
+for i in range(len(classical_solution)):
+    for j in range(i + 1, len(classical_solution)):
+        classical_conflicts += cost_matrix[classical_solution[i]][classical_solution[j]]
+
+classical_cost = classical_fuel + classical_conflicts #sum(cost_matrix[r][r] for r in classical_solution)
+
+#Display
 for i, route_idx in enumerate(classical_solution):
     print(f"  Flight {i}: Route {route_idx % ROUTES_PER_FLIGHT} ({cost_matrix[route_idx][route_idx]:.0f} kg)")
     print(f"Total: {classical_cost:.0f} kg")
 
+print(f"\n  Fuel costs:         {classical_fuel:.0f} kg")
+print(f"  Conflict penalties: {classical_conflicts:.0f} kg")
+print(f"  TOTAL COST:         {classical_cost:.0f} kg")
+
+if classical_conflicts > 0:
+    num_conflicts = int(classical_conflicts / 10000)  # for now 10000 kg per conflict
+    print(f"\n Greedy picked {num_conflicts} conflicting route pairs!")
 
 # Fifth: Quantum - simplified 
 print("\n" + "=" * 70)
