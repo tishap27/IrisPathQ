@@ -233,10 +233,16 @@ print("=" * 70)
 print(f"Classical: {classical_cost:.0f} kg")
 print(f"Quantum:   {best_cost:.0f} kg")
 
-if best_cost <= classical_cost:
-    print("SUCCESS: Quantum matched or beat classical!")
+savings = classical_cost - best_cost
+if savings > 0:
+    pct = (savings / classical_cost) * 100
+
+#if best_cost <= classical_cost:
+    print(f"\n SUCCESS: Quantum WON!!Saved {savings:.0f} kg ({pct:.1f}% improvement)")
+elif savings == 0:
+    print(f"\nQuantum matched classical (both found optimal)")
 else:
-    diff = best_cost - classical_cost
+    #diff = best_cost - classical_cost
     print(f"Classical better by {diff:.0f} kg (quantum needs tuning)")
 
 print("\n" + "=" * 70)
