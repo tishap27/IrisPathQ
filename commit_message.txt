@@ -1,5 +1,18 @@
-add: conflict penalty in the QAOA optimizer(route_qaoa.py)
+Add: Implement weather-aware A* pathfinding with thunderstorm avoidance
 
--Classical greedy now calculates-Fuel costs (diagonal)-Conflict penalties (off-diagonal Q[i,j])
--QAOA now evaluates: Each flight solution with fuel + conflicts
+- Weather data loading from weatherTS.csv with thunderstorm zones
+- Storm detection logic (is_in_thunderstorm) checking waypoint proximity to storm centers
+- Wind penalty calculations for route segments based on headwind/tailwind
+- Alternative route generation using waypoint
 
+Modified:
+- astar.c: Added generate_alternative_routes()
+- data_loader.c: Enhanced weather loading to parse radius, severity, and type
+- data_structures.h: Updated Weather struct with additional fields
+- utils.c: Added bearing calculation, wind component, and storm detection functions
+- main.c: Added storm check debug statement
+
+Current Issues:
+- Routes not avoiding thunderstorms despite detection (YYZ, YUL, YOW in storms)
+- Direct routes chosen even when airports are inside storm zones
+- Alternative routes are identical to Route 0 

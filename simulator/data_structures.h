@@ -32,7 +32,12 @@ typedef struct {
     double longitude;
     double wind_speed;      // knots
     double wind_direction;  // degrees
+    double radius_nm;
+    char severity[20];
     char weather_type[20];  // CLEAR, STORM, etc.
+   
+ 
+    
 } Weather;
 
 // Aircraft type
@@ -82,6 +87,10 @@ double calculate_distance(double lat1, double lon1, double lat2, double lon2);
 double calculate_fuel(Route *route, AircraftType *aircraft);
 void print_route(Route *route, Waypoint *waypoints);
 int is_in_hazard(double lat, double lon, Weather *weather_cells, int num_cells);
+double calculate_wind_penalty(Waypoint *from, Waypoint *to, Weather *weather_cells, int num_cells);
+double calculate_bearing(double lat1, double lon1, double lat2, double lon2);
+double get_wind_component(double route_bearing, double wind_direction, double wind_speed);
+int is_in_thunderstorm(double lat, double lon, Weather *weather_cells, int num_cells);
 
 int load_flights(const char *filename, ProblemInstance *problem);
 int load_waypoints(const char *filename, ProblemInstance *problem);

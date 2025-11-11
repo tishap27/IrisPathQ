@@ -19,8 +19,28 @@ int main() {
     printf("Loading data...\n");
     load_flights("data/flights.csv", &problem);
     load_waypoints("data/waypoints.csv", &problem);
-    load_weather("data/weather.csv", &problem);
+    load_weather("data/weatherTS.csv", &problem);
     
+    //DEBUG
+    printf("\n=== STORM CHECK ===\n");
+for (int i = 0; i < problem.num_waypoints; i++) {
+    for (int j = 0; j < problem.num_weather_cells; j++) {
+        if (strcmp(problem.weather_cells[j].weather_type, "THUNDERSTORM") == 0) {
+            double dist = calculate_distance(
+                problem.waypoints[i].latitude, problem.waypoints[i].longitude,
+                problem.weather_cells[j].latitude, problem.weather_cells[j].longitude
+            );
+            if (dist < problem.weather_cells[j].radius_nm) {
+                printf("  %s is INSIDE storm at (%.1f, %.1f) - distance: %.2f nm\n",
+                       problem.waypoints[i].id, 
+                       problem.weather_cells[j].latitude,
+                       problem.weather_cells[j].longitude,
+                       dist);
+            }
+        }
+    }
+}
+
     printf("\n====================================\n");
     printf("Generating Routes\n");
     printf("====================================\n\n");

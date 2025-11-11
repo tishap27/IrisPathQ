@@ -87,11 +87,21 @@ int load_weather(const char *filename, ProblemInstance *problem) {
     while (fgets(line, sizeof(line), file) && problem->num_weather_cells < 100) {
         Weather *w = &problem->weather_cells[problem->num_weather_cells];
         
-        sscanf(line, "%lf,%lf,%lf,%lf,%s",
-               &w->latitude, &w->longitude, &w->wind_speed, 
-               &w->wind_direction, w->weather_type);
+         sscanf(line, "%lf,%lf,%lf,%lf,%lf,%[^,],%s",
+               &w->latitude,           // Column 1
+               &w->longitude,          // Column 2
+               &w->wind_speed,         // Column 3
+               &w->wind_direction,     // Column 4
+               &w->radius_nm,          // Column 5
+               w->severity,            // Column 6 (reads until comma)
+               w->weather_type);       // Column 7
         
         problem->num_weather_cells++;
+
+        // Debug
+        printf("  Loaded: %s at (%.1f, %.1f), radius=%.0f nm, type=%s\n",
+               w->weather_type, w->latitude, w->longitude, 
+               w->radius_nm, w->weather_type);
     }
     
     fclose(file);

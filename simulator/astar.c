@@ -469,3 +469,131 @@ void export_full_matrix(double *cost_matrix, int matrix_size, const char *filena
     fclose(file);
     printf("Full matrix exported to %s\n", filename);
 }
+
+/*
+ * This function applies the A* pathfinding algorithm to compute a route from a given origin
+ * waypoint to a destination waypoint. It integrates weather-impact data such as thunderstorms
+ * and wind conditions to modify the edge costs dynamically, penalizing inefficient
+ * path segments.
+ */
+
+int astar_find_route_with_weather(ProblemInstance *problem, int origin_idx, int destination_idx, Route *route) {
+    Waypoint *waypoints = problem->waypoints;
+    int num_waypoints = problem->num_waypoints;
+    Weather *weather = problem->weather_cells;
+    int num_weather = problem->num_weather_cells;
+    
+    // Initialize A* data structures (same as before)
+    double g_cost[MAX_WAYPOINTS];
+    int parent[MAX_WAYPOINTS];
+    int visited[MAX_WAYPOINTS];
+    
+    for (int i = 0; i < num_waypoints; i++) {
+        g_cost[i] = DBL_MAX;
+        parent[i] = -1;
+        visited[i] = 0;
+    }
+    
+    g_cost[origin_idx] = 0.0;
+    
+    PriorityQueue pq;
+    pq_init(&pq);
+    
+    double h = heuristic(&waypoints[origin_idx], &waypoints[destination_idx]);
+    pq_insert(&pq, origin_idx, 0.0, h, -1);
+    
+    int found = 0;
+    
+    // A* main loop
+    while (!pq_is_empty(&pq)) {
+        PQNode current = pq_extract_min(&pq);
+        int current_idx = current.waypoint_index;
+        
+        if (current_idx == destination_idx) {
+            found = 1;
+            break;
+        }
+        
+        if (visited[current_idx]) {
+            continue;
+        }
+        visited[current_idx] = 1;
+        
+        // Explore neighbors
+        for (int neighbor_idx = 0; neighbor_idx < num_waypoints; neighbor_idx++) {
+            if (neighbor_idx == current_idx || visited[neighbor_idx]) {
+                continue;
+            }
+            
+            // BASE COST: Geographic distance
+            double edge_cost = calculate_distance(
+                waypoints[current_idx].latitude, waypoints[current_idx].longitude,
+                waypoints[neighbor_idx].latitude, waypoints[neighbor_idx].longitude
+            );
+            
+            // Skip if too far (not a realistic connection)
+            if (edge_cost > 3000.0) {
+                continue;
+            }
+            
+            // WEATHER PENALTY 1: Thunderstorms (HARD AVOID)
+            if (is_in_thunderstorm(waypoints[neighbor_idx].latitude,
+                                  waypoints[neighbor_idx].longitude,
+                                  weather, num_weather)) {
+                edge_cost *= 5.0;  // 5x penalty = effective avoidance
+                printf("  ⚡ Thunderstorm at %s (penalty applied)\n", 
+                       waypoints[neighbor_idx].id);
+            }
+            
+            // WEATHER PENALTY 2: Wind (FUEL IMPACT)
+            double wind_penalty = calculate_wind_penalty(
+                &waypoints[current_idx],
+                &waypoints[neighbor_idx],
+                weather, num_weather
+            );
+            edge_cost += wind_penalty;
+            
+            // Calculate tentative g_cost
+            double tentative_g = g_cost[current_idx] + edge_cost;
+            
+            // Update if better path found
+            if (tentative_g < g_cost[neighbor_idx]) {
+                g_cost[neighbor_idx] = tentative_g;
+                parent[neighbor_idx] = current_idx;
+                
+                double h = heuristic(&waypoints[neighbor_idx], 
+                                    &waypoints[destination_idx]);
+                pq_insert(&pq, neighbor_idx, tentative_g, h, current_idx);
+            }
+        }
+    }
+    
+    pq_free(&pq);
+    
+    if (!found) {
+        printf("No route found from %s to %s (weather blocked?)\n",
+               waypoints[origin_idx].id, waypoints[destination_idx].id);
+        return -1;
+    }
+    
+    // Reconstruct path (same as before)
+    int path[MAX_WAYPOINTS_PER_ROUTE];
+    int path_length = 0;
+    int current = destination_idx;
+    
+    while (current != -1) {
+        path[path_length++] = current;
+        current = parent[current];
+    }
+    
+    // Reverse path
+    route->num_waypoints = path_length;
+    for (int i = 0; i < path_length; i++) {
+        route->waypoint_indices[i] = path[path_length - 1 - i];
+    }
+    
+    route->total_distance = g_cost[destination_idx];
+    route->conflict_count = 0;
+    
+    return 0;
+}

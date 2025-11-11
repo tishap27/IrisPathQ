@@ -1,0 +1,11 @@
+latitude,longitude,wind_speed,wind_direction,radius_nm,severity,weather_type
+44.0,-80.0,30,180,80,thunderstorm,THUNDERSTORM
+49.5,-106.0,40,270,100,thunderstorm,THUNDERSTORM
+45.5,-75.0,25,90,60,thunderstorm,THUNDERSTORM
+51.0,-114.0,15,180,75,turbulence,TURBULENCE
+48.0,-95.0,35,270,50,rain,RAIN
+49.916,-97.249,12,330,100,clear,CLEAR
+43.679,-79.629,9,350,100,clear,CLEAR
+44.8781,-63.5136,9,210,100,clear,CLEAR
+49.183,-123.168,4,110,100,clear,CLEAR
+53.308,-113.592,5,260,100,clear,CLEAR
