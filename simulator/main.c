@@ -53,7 +53,7 @@ for (int i = 0; i < problem.num_waypoints; i++) {
     }
     
     //Conflict
-    inject_conflicts(&problem);
+    //inject_conflicts(&problem);
 
 
     printf("\n====================================\n");

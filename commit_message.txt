@@ -1,18 +1,12 @@
-Add: Implement weather-aware A* pathfinding with thunderstorm avoidance
+Add: waypoint exclusion mechanism for alternative route generation
 
-- Weather data loading from weatherTS.csv with thunderstorm zones
-- Storm detection logic (is_in_thunderstorm) checking waypoint proximity to storm centers
-- Wind penalty calculations for route segments based on headwind/tailwind
-- Alternative route generation using waypoint
+- Implement astar_with_exclusions() to force routes avoiding blocked waypoints
+- Enhance generate_alternative_routes() to create diverse paths via intermediate waypoints
+- Integrate calculate_wind_penalty() for fuel-efficient routing
+- Add astar_find_route_with_weather() combining geographic distance with weather costs
+- Routes now respect weather constraints while generating conflict-aware alternatives
 
-Modified:
-- astar.c: Added generate_alternative_routes()
-- data_loader.c: Enhanced weather loading to parse radius, severity, and type
-- data_structures.h: Updated Weather struct with additional fields
-- utils.c: Added bearing calculation, wind component, and storm detection functions
-- main.c: Added storm check debug statement
 
-Current Issues:
-- Routes not avoiding thunderstorms despite detection (YYZ, YUL, YOW in storms)
-- Direct routes chosen even when airports are inside storm zones
-- Alternative routes are identical to Route 0 
+This now enables A* to generate multiple distinct routes per flight that avoid
+both weather hazards and route conflicts, preparing the problem for quantum
+optimization via QAOA.
