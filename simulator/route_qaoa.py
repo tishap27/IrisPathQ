@@ -135,13 +135,15 @@ def create_qaoa_circuit(gamma, beta, p=1):
                 
                 if r == 0:    # Route 00
                     pass
-                elif r == 1:  # Route 01
+                elif r == 1:  # Route 001
                     qc.rz(gamma * weight, q_start)
-                elif r == 2:  # Route 10
+                elif r == 2:  # Route 010
                     qc.rz(gamma * weight, q_start + 1)
-                elif r == 3:  # Route 11
+                elif r == 3:  # Route 011
                     qc.rz(gamma * weight, q_start)
                     qc.rz(gamma * weight, q_start + 1)
+                elif r == 4:  # Route 100  
+                    qc.rz(gamma * weight, q_start)
         
         # Entangle flights to encode conflicts
         for i in range(NUM_FLIGHTS - 1):
@@ -149,6 +151,7 @@ def create_qaoa_circuit(gamma, beta, p=1):
             q2 = (i + 1) * QUBITS_PER_FLIGHT
             qc.cx(q1, q2)
             qc.cx(q1 + 1, q2 + 1)
+            qc.cx(q1 + 2, q2 + 2)
         
         # Mixing Hamiltonian
         for q in range(num_qubits):
