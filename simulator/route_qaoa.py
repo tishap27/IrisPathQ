@@ -107,7 +107,7 @@ def compute_cost(solution_bitstring):
     return fuel + conflicts, solution
 
 # Encode with 2 qubits per flight (4 possible routes: 00,01,10,11)
-QUBITS_PER_FLIGHT = 2
+QUBITS_PER_FLIGHT = 3
 num_qubits = NUM_FLIGHTS * QUBITS_PER_FLIGHT
 
 print(f"Circuit: {num_qubits} qubits ({QUBITS_PER_FLIGHT} per flight)")
