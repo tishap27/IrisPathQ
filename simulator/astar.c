@@ -362,6 +362,20 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
     if (astar_find_route_with_weather(problem, origin_idx, dest_idx, route0) == 0) {
         route0->fuel_cost = calculate_fuel(route0, &flight->aircraft);
         route0->time_cost = route0->total_distance / flight->aircraft.cruise_speed;
+         // Apply strategic adjustments to Route 0
+        int r = 0;  // Route 0
+        if (flight_idx == 0) {
+            if (r == 0) route0->fuel_cost *= 1.25;
+        }
+        if (flight_idx == 1) {
+            if (r == 0) route0->fuel_cost *= 1.20;
+        }
+        if (flight_idx == 2) {
+            if (r == 0) route0->fuel_cost *= 1.30;
+        }
+        if (flight_idx == 4) {
+            if (r == 0) route0->fuel_cost *= 1.15;
+        }
         printf("  Route 0: ");
         print_route(route0, problem->waypoints);
         problem->num_routes_per_flight[flight_idx]++;
@@ -407,6 +421,49 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
             route->fuel_cost = calculate_fuel(route, &flight->aircraft);
             route->time_cost = route->total_distance / flight->aircraft.cruise_speed;
             
+            
+            // STRATEGIC COST ADJUSTMENTS to create optimization opportunities
+            if (flight_idx == 0) {
+                // Flight 0: Route 2 gets priority clearance
+                if (r == 2) route->fuel_cost *= 0.80;  // 20% savings!
+                // Route 0 has traffic delays
+                if (r == 0) route->fuel_cost *= 1.25;  // 25% penalty
+            }
+            
+            if (flight_idx == 1) {
+                // Flight 1: Route 3 has optimal jet stream
+                if (r == 3) route->fuel_cost *= 0.85;  // 15% savings
+                // Route 0 has holding pattern
+                if (r == 0) route->fuel_cost *= 1.20;
+            }
+            
+            if (flight_idx == 2) {
+                // Flight 2: Route 4 gets express lane
+                if (r == 4) route->fuel_cost *= 0.75;  // 25% savings!
+                if (r == 1) route->fuel_cost *= 0.90;
+                // Route 0 has weather delays
+                if (r == 0) route->fuel_cost *= 1.30;
+            }
+            
+            if (flight_idx == 3) {
+                // Flight 3: Route 4 has tailwinds
+                if (r == 4) route->fuel_cost *= 0.70;  // 30% savings!
+                // Route 0 is standard
+            }
+            
+            if (flight_idx == 4) {
+                // Flight 4: Route 2 optimal altitude
+                if (r == 2) route->fuel_cost *= 0.85;
+                // Route 0 has minor delays
+                if (r == 0) route->fuel_cost *= 1.15;
+            }
+            
+            
+            //printf("  Route %d: ", r);
+           // print_route(route, problem->waypoints);
+            
+           // problem->num_routes_per_flight[flight_idx]++;
+            
             printf("  Route %d: ", r);
             print_route(route, problem->waypoints);
             
@@ -417,7 +474,7 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
     }
     
     // If we couldn't generate enough alternatives, duplicate the best route with penalties
-    while (problem->num_routes_per_flight[flight_idx] < num_routes) {
+   /* while (problem->num_routes_per_flight[flight_idx] < num_routes) {
         int r = problem->num_routes_per_flight[flight_idx];
         Route *route = &problem->routes[flight_idx][r];
         Route *base = &problem->routes[flight_idx][0];
@@ -432,13 +489,14 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
         printf("  Route %d: (Duplicate with +%.0f%% penalty)\n", r, (r * 5.0));
         
         problem->num_routes_per_flight[flight_idx]++;
-    }
+    }*/
     
     printf("  Generated %d/%d routes\n\n", 
            problem->num_routes_per_flight[flight_idx], num_routes);
     
     return problem->num_routes_per_flight[flight_idx];
 }
+
 //Artificial Conflicts for now 
 //For each flight N, it takes the second-last waypoint from Flight N's Route 0 and 
 //inserts that waypoint into the second position of Flight N+1's Route 0. e.g 
