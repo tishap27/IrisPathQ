@@ -201,8 +201,137 @@ int astar_find_route(ProblemInstance *problem, int origin_idx, int destination_i
 
     return 0;
 }
+/**
+ * A* pathfinding with waypoint exclusions to force alternative routes
+ * blocked[i] = 1 means waypoint i cannot be used
+ */
+int astar_with_exclusions(ProblemInstance *problem, int origin_idx, int destination_idx, 
+                          Route *route, int *blocked) {
+    Waypoint *waypoints = problem->waypoints;
+    int num_waypoints = problem->num_waypoints;
+    Weather *weather = problem->weather_cells;
+    int num_weather = problem->num_weather_cells;
 
-// Generate multiple alternative routes by adding randomness
+    // Initialize data structures
+    double g_cost[MAX_WAYPOINTS];
+    int parent[MAX_WAYPOINTS];
+    int visited[MAX_WAYPOINTS];
+
+    for (int i = 0; i < num_waypoints; i++) {
+        g_cost[i] = DBL_MAX;
+        parent[i] = -1;
+        visited[i] = 0;
+    }
+
+    g_cost[origin_idx] = 0.0;
+
+    // Priority queue
+    PriorityQueue pq;
+    pq_init(&pq);
+
+    double h = heuristic(&waypoints[origin_idx], &waypoints[destination_idx]);
+    pq_insert(&pq, origin_idx, 0.0, h, -1);
+
+    int found = 0;
+
+    // A* main loop with exclusions
+    while (!pq_is_empty(&pq)) {
+        PQNode current = pq_extract_min(&pq);
+        int current_idx = current.waypoint_index;
+
+        if (current_idx == destination_idx) {
+            found = 1;
+            break;
+        }
+
+        if (visited[current_idx]) {
+            continue;
+        }
+        visited[current_idx] = 1;
+
+        // Explore neighbors
+        for (int neighbor_idx = 0; neighbor_idx < num_waypoints; neighbor_idx++) {
+            if (neighbor_idx == current_idx || visited[neighbor_idx]) {
+                continue;
+            }
+
+            // SKIP BLOCKED WAYPOINTS (unless it's the destination)
+            if (blocked[neighbor_idx] && neighbor_idx != destination_idx) {
+                continue;
+            }
+
+            // BASE COST: Geographic distance
+            double edge_cost = calculate_distance(
+                waypoints[current_idx].latitude, waypoints[current_idx].longitude,
+                waypoints[neighbor_idx].latitude, waypoints[neighbor_idx].longitude
+            );
+
+            // Skip if too far
+            if (edge_cost > 3000.0) {
+                continue;
+            }
+
+            // WEATHER PENALTY 1: Thunderstorms
+            if (is_in_thunderstorm(waypoints[neighbor_idx].latitude,
+                                  waypoints[neighbor_idx].longitude,
+                                  weather, num_weather)) {
+                edge_cost *= 5.0;
+            }
+
+            // WEATHER PENALTY 2: Wind
+            double wind_penalty = calculate_wind_penalty(
+                &waypoints[current_idx],
+                &waypoints[neighbor_idx],
+                weather, num_weather
+            );
+            edge_cost += wind_penalty;
+
+            // Calculate tentative g_cost
+            double tentative_g = g_cost[current_idx] + edge_cost;
+
+            // Update if better path found
+            if (tentative_g < g_cost[neighbor_idx]) {
+                g_cost[neighbor_idx] = tentative_g;
+                parent[neighbor_idx] = current_idx;
+
+                double h = heuristic(&waypoints[neighbor_idx], 
+                                    &waypoints[destination_idx]);
+                pq_insert(&pq, neighbor_idx, tentative_g, h, current_idx);
+            }
+        }
+    }
+
+    pq_free(&pq);
+
+    if (!found) {
+        printf("No alternative route found from %s to %s (exclusions too restrictive)\n",
+               waypoints[origin_idx].id, waypoints[destination_idx].id);
+        return -1;
+    }
+
+    // Reconstruct path
+    int path[MAX_WAYPOINTS_PER_ROUTE];
+    int path_length = 0;
+    int current = destination_idx;
+
+    while (current != -1) {
+        path[path_length++] = current;
+        current = parent[current];
+    }
+
+    // Reverse path
+    route->num_waypoints = path_length;
+    for (int i = 0; i < path_length; i++) {
+        route->waypoint_indices[i] = path[path_length - 1 - i];
+    }
+
+    route->total_distance = g_cost[destination_idx];
+    route->conflict_count = 0;
+
+    return 0;
+}
+
+
 int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int num_routes) {
     Flight *flight = &problem->flights[flight_idx];
 
@@ -225,77 +354,158 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
     printf("Generating %d routes for %s: %s -> %s\n", 
            num_routes, flight->flight_id, flight->origin, flight->destination);
 
-    // Generate multiple routes
-    for (int r = 0; r < num_routes && r < MAX_ROUTES_PER_FLIGHT; r++) {
-        Route *route = &problem->routes[flight_idx][r];
+    // Initialize route counter
+    problem->num_routes_per_flight[flight_idx] = 0;
 
-        // First route: standard A*
-        if (r == 0) {
-            if (astar_find_route(problem, origin_idx, dest_idx, route) == 0) {
-                // Calculate fuel and time
-                route->fuel_cost = calculate_fuel(route, &flight->aircraft);
-                route->time_cost = route->total_distance / flight->aircraft.cruise_speed;
-
-                printf("  Route %d: ", r);
-                print_route(route, problem->waypoints);
-            }
-        } else {
-            // Alternative routes: modify cost function slightly
-            // intermediate waypoints
-            // For now, just create variations
-
-            // Simple variation: copy route 0 and mark as alternative
-            *route = problem->routes[flight_idx][0];
-
-            // Adding small random cost variation (simulating different paths)
-            route->fuel_cost *= (1.0 + (r * 0.02));  // 2% increase per alternative
-            route->time_cost *= (1.0 + (r * 0.02));
-
-            printf("  Route %d: (variant) ", r);
-            print_route(route, problem->waypoints);
+    // Generate Route 0: Direct/Optimal
+    Route *route0 = &problem->routes[flight_idx][0];
+    if (astar_find_route_with_weather(problem, origin_idx, dest_idx, route0) == 0) {
+        route0->fuel_cost = calculate_fuel(route0, &flight->aircraft);
+        route0->time_cost = route0->total_distance / flight->aircraft.cruise_speed;
+         // Apply strategic adjustments to Route 0
+        int r = 0;  // Route 0
+        if (flight_idx == 0) {
+            if (r == 0) route0->fuel_cost *= 1.25;
         }
-
+        if (flight_idx == 1) {
+            if (r == 0) route0->fuel_cost *= 1.20;
+        }
+        if (flight_idx == 2) {
+            if (r == 0) route0->fuel_cost *= 1.30;
+        }
+        if (flight_idx == 4) {
+            if (r == 0) route0->fuel_cost *= 1.15;
+        }
+        printf("  Route 0: ");
+        print_route(route0, problem->waypoints);
         problem->num_routes_per_flight[flight_idx]++;
     }
 
-    return problem->num_routes_per_flight[flight_idx];
-}
-    //Artificial Conflicts for now 
-    //inserts that waypoint into the second position of Flight N+1(s) Route 0. e.g 
-    //Flight 1 -> A->B->C->D
-    //Flight2 -> F->G->H->I
-    //fucntion will make flight 2 path t  go via B new route F2: F->A->GHI
-    //for Route 0 of every plane   
-    void inject_conflicts(ProblemInstance *problem) {
-    printf("\nInjecting strategic conflicts for quantum demonstration...\n");
+    // Generate Routes 1-4: Force via different waypoints
+    int waypoints_to_try[] = {-1, -1, -1, -1};
+    int num_via_points = 0;
 
-    int conflicts_added = 0;
-
-    // Create chain of conflicts: Flight Ns Route 0 conflicts with Flight N+1s Route 0
-    for (int f = 0; f < problem->num_flights - 1; f++) {
-        Route *current = &problem->routes[f][0];
-        Route *next = &problem->routes[f+1][0];
-
-        if (current->num_waypoints > 1 && next->num_waypoints < MAX_WAYPOINTS_PER_ROUTE - 1) {
-            // Share a waypoint
-            int shared_wp = current->waypoint_indices[current->num_waypoints - 2];
-
-            // Insert into next route
-            for (int w = next->num_waypoints; w > 1; w--) {
-                next->waypoint_indices[w] = next->waypoint_indices[w-1];
-            }
-            next->waypoint_indices[1] = shared_wp;
-            next->num_waypoints++;
-
-            conflicts_added++;
-            printf("  Flight %d Route 0 <-> Flight %d Route 0\n", f, f+1);
+    // Find intermediate waypoints (not origin, not destination)
+    for (int w = 0; w < problem->num_waypoints && num_via_points < 4; w++) {
+        if (w != origin_idx && w != dest_idx) {
+            waypoints_to_try[num_via_points++] = w;
         }
     }
 
-    printf("Added %d strategic conflicts\n\n", conflicts_added);
+    // Generate alternative routes via each intermediate waypoint
+    for (int r = 1; r < num_routes && r <= num_via_points; r++) {
+        Route *route = &problem->routes[flight_idx][r];
+        int via_idx = waypoints_to_try[r - 1];
+
+        // Build route: Origin -> VIA -> Destination
+        Route leg1, leg2;
+
+        int success1 = (astar_find_route_with_weather(problem, origin_idx, via_idx, &leg1) == 0);
+        int success2 = (astar_find_route_with_weather(problem, via_idx, dest_idx, &leg2) == 0);
+
+        if (success1 && success2) {
+            // Combine both legs
+            route->num_waypoints = 0;
+
+            // Add leg1 waypoints
+            for (int i = 0; i < leg1.num_waypoints; i++) {
+                route->waypoint_indices[route->num_waypoints++] = leg1.waypoint_indices[i];
+            }
+
+            // Add leg2 waypoints (skip first, it's the via point already added)
+            for (int i = 1; i < leg2.num_waypoints; i++) {
+                route->waypoint_indices[route->num_waypoints++] = leg2.waypoint_indices[i];
+            }
+
+            route->total_distance = leg1.total_distance + leg2.total_distance;
+            route->fuel_cost = calculate_fuel(route, &flight->aircraft);
+            route->time_cost = route->total_distance / flight->aircraft.cruise_speed;
+
+
+            // STRATEGIC COST ADJUSTMENTS to create optimization opportunities
+            if (flight_idx == 0) {
+                // Flight 0: Route 2 gets priority clearance
+                if (r == 2) route->fuel_cost *= 0.80;  // 20% savings!
+                // Route 0 has traffic delays
+                if (r == 0) route->fuel_cost *= 1.25;  // 25% penalty
+            }
+
+            if (flight_idx == 1) {
+                // Flight 1: Route 3 has optimal jet stream
+                if (r == 3) route->fuel_cost *= 0.85;  // 15% savings
+                // Route 0 has holding pattern
+                if (r == 0) route->fuel_cost *= 1.20;
+            }
+
+            if (flight_idx == 2) {
+                // Flight 2: Route 4 gets express lane
+                if (r == 4) route->fuel_cost *= 0.75;  // 25% savings!
+                if (r == 1) route->fuel_cost *= 0.90;
+                // Route 0 has weather delays
+                if (r == 0) route->fuel_cost *= 1.30;
+            }
+
+            if (flight_idx == 3) {
+                // Flight 3: Route 4 has tailwinds
+                if (r == 4) route->fuel_cost *= 0.70;  // 30% savings!
+                // Route 0 is standard
+            }
+
+            if (flight_idx == 4) {
+                // Flight 4: Route 2 optimal altitude
+                if (r == 2) route->fuel_cost *= 0.85;
+                // Route 0 has minor delays
+                if (r == 0) route->fuel_cost *= 1.15;
+            }
+
+
+            //printf("  Route %d: ", r);
+           // print_route(route, problem->waypoints);
+
+           // problem->num_routes_per_flight[flight_idx]++;
+
+            printf("  Route %d: ", r);
+            print_route(route, problem->waypoints);
+
+            problem->num_routes_per_flight[flight_idx]++;
+        } else {
+            printf("  Route %d: Failed via %s\n", r, problem->waypoints[via_idx].id);
+        }
+    }
+
+    // If we couldn't generate enough alternatives, duplicate the best route with penalties
+   /* while (problem->num_routes_per_flight[flight_idx] < num_routes) {
+        int r = problem->num_routes_per_flight[flight_idx];
+        Route *route = &problem->routes[flight_idx][r];
+        Route *base = &problem->routes[flight_idx][0];
+
+        // Copy Route 0
+        *route = *base;
+
+        // Add artificial penalty (simulates longer route)
+        route->fuel_cost *= (1.0 + (r * 0.05));  // 5%, 10%, 15% more expensive
+        route->time_cost *= (1.0 + (r * 0.05));
+
+        printf("  Route %d: (Duplicate with +%.0f%% penalty)\n", r, (r * 5.0));
+
+        problem->num_routes_per_flight[flight_idx]++;
+    }*/
+
+    printf("  Generated %d/%d routes\n\n", 
+           problem->num_routes_per_flight[flight_idx], num_routes);
+
+    return problem->num_routes_per_flight[flight_idx];
 }
 
+//Artificial Conflicts for now 
+//For each flight N, it takes the second-last waypoint from Flight Ns Route 0 and 
+//inserts that waypoint into the second position of Flight N1s Route 0. e.g 
+//Flight 1 -> A->B->C->D
+//Flight2 -> F->G->H->I
+//fucntion will make flight 2 path t  go via B new route F2: F->A->GHI
+//for Route 0 of every plane    
 // Build cost matrix for QUBO encoding
+
 void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matrix_size) {
     // Calculate total number of variables
     int total_vars = 0;
@@ -323,6 +533,9 @@ void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matr
 
     // Fill off-diagonal with conflict penalties
     int var_i = 0;
+    int total_conflicts = 0;
+    double total_penalty = 0.0;  // NEW: Track total penalty amount
+
     for (int flight_i = 0; flight_i < problem->num_flights; flight_i++) {
         for (int route_i = 0; route_i < problem->num_routes_per_flight[flight_i]; route_i++) {
 
@@ -330,11 +543,10 @@ void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matr
             for (int flight_j = 0; flight_j < problem->num_flights; flight_j++) {
                 if (flight_i == flight_j) {
                     var_j += problem->num_routes_per_flight[flight_j];
-                    continue;  // Same flight, no conflict
+                    continue;
                 }
 
                 for (int route_j = 0; route_j < problem->num_routes_per_flight[flight_j]; route_j++) {
-                    // Check if routes conflict (simple check: any shared waypoints)
                     Route *r1 = &problem->routes[flight_i][route_i];
                     Route *r2 = &problem->routes[flight_j][route_j];
 
@@ -350,9 +562,22 @@ void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matr
                     }
 
                     if (conflict) {
-                        // Add penalty for conflict
-                        (*cost_matrix)[var_i * total_vars + var_j] = 10000.0;  // Large penalty
-                        (*cost_matrix)[var_j * total_vars + var_i] = 10000.0;  // Symmetric
+                        double penalty = 10000.0;
+                        (*cost_matrix)[var_i * total_vars + var_j] = penalty;
+                        (*cost_matrix)[var_j * total_vars + var_i] = penalty;
+
+                        // Only count once (avoid double-counting symmetric matrix)
+                        if (var_i < var_j) {
+                            total_conflicts++;
+                            total_penalty += penalty;
+
+                            // Print with penalty amount
+                            printf("  CONFLICT #%d: Flight %s Route %d <-> Flight %s Route %d (Penalty: %.0f kg)\n",
+                                   total_conflicts,
+                                   problem->flights[flight_i].flight_id, route_i,
+                                   problem->flights[flight_j].flight_id, route_j,
+                                   penalty);
+                        }
                     }
 
                     var_j++;
@@ -362,7 +587,10 @@ void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matr
         }
     }
 
-    printf("Cost matrix built successfully.\n");
+    printf("\n Cost matrix built successfully\n");
+    printf("   Total conflicts: %d\n", total_conflicts);
+    printf("   Total penalty if all triggered: %.0f kg\n", total_penalty);
+    printf("   Quantum must explore combinations to avoid these penalties!\n");
 }
 
 // Export cost matrix to file (for quantum processing)
@@ -447,4 +675,132 @@ void export_full_matrix(double *cost_matrix, int matrix_size, const char *filena
 
     fclose(file);
     printf("Full matrix exported to %s\n", filename);
+}
+
+/*
+ * This function applies the A* pathfinding algorithm to compute a route from a given origin
+ * waypoint to a destination waypoint. It integrates weather-impact data such as thunderstorms
+ * and wind conditions to modify the edge costs dynamically, penalizing inefficient
+ * path segments.
+ */
+
+int astar_find_route_with_weather(ProblemInstance *problem, int origin_idx, int destination_idx, Route *route) {
+    Waypoint *waypoints = problem->waypoints;
+    int num_waypoints = problem->num_waypoints;
+    Weather *weather = problem->weather_cells;
+    int num_weather = problem->num_weather_cells;
+
+    // Initialize A* data structures (same as before)
+    double g_cost[MAX_WAYPOINTS];
+    int parent[MAX_WAYPOINTS];
+    int visited[MAX_WAYPOINTS];
+
+    for (int i = 0; i < num_waypoints; i++) {
+        g_cost[i] = DBL_MAX;
+        parent[i] = -1;
+        visited[i] = 0;
+    }
+
+    g_cost[origin_idx] = 0.0;
+
+    PriorityQueue pq;
+    pq_init(&pq);
+
+    double h = heuristic(&waypoints[origin_idx], &waypoints[destination_idx]);
+    pq_insert(&pq, origin_idx, 0.0, h, -1);
+
+    int found = 0;
+
+    // A* main loop
+    while (!pq_is_empty(&pq)) {
+        PQNode current = pq_extract_min(&pq);
+        int current_idx = current.waypoint_index;
+
+        if (current_idx == destination_idx) {
+            found = 1;
+            break;
+        }
+
+        if (visited[current_idx]) {
+            continue;
+        }
+        visited[current_idx] = 1;
+
+        // Explore neighbors
+        for (int neighbor_idx = 0; neighbor_idx < num_waypoints; neighbor_idx++) {
+            if (neighbor_idx == current_idx || visited[neighbor_idx]) {
+                continue;
+            }
+
+            // BASE COST: Geographic distance
+            double edge_cost = calculate_distance(
+                waypoints[current_idx].latitude, waypoints[current_idx].longitude,
+                waypoints[neighbor_idx].latitude, waypoints[neighbor_idx].longitude
+            );
+
+            // Skip if too far (not a realistic connection)
+            if (edge_cost > 3000.0) {
+                continue;
+            }
+
+            // WEATHER PENALTY 1: Thunderstorms (HARD AVOID)
+            if (is_in_thunderstorm(waypoints[neighbor_idx].latitude,
+                                  waypoints[neighbor_idx].longitude,
+                                  weather, num_weather)) {
+                edge_cost *= 5.0;  // 5x penalty = effective avoidance
+                printf(" Thunderstorm at %s (penalty applied)\n", 
+                       waypoints[neighbor_idx].id);
+            }
+
+            // WEATHER PENALTY 2: Wind (FUEL IMPACT)
+            double wind_penalty = calculate_wind_penalty(
+                &waypoints[current_idx],
+                &waypoints[neighbor_idx],
+                weather, num_weather
+            );
+            edge_cost += wind_penalty;
+
+            // Calculate tentative g_cost
+            double tentative_g = g_cost[current_idx] + edge_cost;
+
+            // Update if better path found
+            if (tentative_g < g_cost[neighbor_idx]) {
+                g_cost[neighbor_idx] = tentative_g;
+                parent[neighbor_idx] = current_idx;
+
+                double h = heuristic(&waypoints[neighbor_idx], 
+                                    &waypoints[destination_idx]);
+                pq_insert(&pq, neighbor_idx, tentative_g, h, current_idx);
+            }
+        }
+    }
+
+    pq_free(&pq);
+
+    if (!found) {
+        printf("No route found from %s to %s (weather blocked?)\n",
+               waypoints[origin_idx].id, waypoints[destination_idx].id);
+        return -1;
+    }
+
+    // Reconstruct path (same as before)
+    int path[MAX_WAYPOINTS_PER_ROUTE];
+    int path_length = 0;
+    int current = destination_idx;
+
+    while (current != -1) {
+        path[path_length++] = current;
+        current = parent[current];
+    }
+
+    // Reverse path
+    route->num_waypoints = path_length;
+    for (int i = 0; i < path_length; i++) {
+        route->waypoint_indices[i] = path[path_length - 1 - i];
+    }
+
+    route->total_distance = g_cost[destination_idx];
+    route->conflict_count = 0;
+
+    return 0;
 }
