@@ -1,8 +1,6 @@
-feat: integrate weather-aware A* pathfinding with QAOA optimization
+fix: resolve QAOA bitstring decoding causing [0,0,0,0,0] bias
 
-- Implement thunderstorm avoidance with 5x cost penalty
-- Add wind component calculations for fuel burn estimation
-- Generate alternative routes via intermediate waypoints
-- Build conflict-aware cost matrix (166 conflicts detected)
-- QAOA achieves 3-12% improvement over greedy A* baseline
-- Test with 3 weather scenarios (weatherTS, weatherTS2, weatherTS3)
+- Fix bitstring-to-solution mapping (remove reversed())
+- Add explicit penalties for invalid route encodings (101, 110, 111)
+- Improve QAOA circuit with proper binary phase encoding for all 5 routes
+- Add RY rotations to mixing layer for better state exploration

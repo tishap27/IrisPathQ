@@ -101,5 +101,8 @@ void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matr
 void export_cost_matrix(double *cost_matrix, int matrix_size, const char *filename);
 void export_full_matrix(double *cost_matrix, int matrix_size, const char *filename);
 int astar_find_route_with_weather(ProblemInstance *problem, int origin_idx, int destination_idx, Route *route);
+// MILP
+int solve_milp(ProblemInstance *problem, int *solution, double *optimal_cost);
+void compare_milp_greedy(ProblemInstance *problem);
 
 #endif

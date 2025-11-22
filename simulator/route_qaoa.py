@@ -1,3 +1,4 @@
+#VERSION1
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import Aer
@@ -84,27 +85,70 @@ for flight in range(NUM_FLIGHTS):
     for route_num, fuel in costs:
         marker = "← CHEAPEST" if fuel == costs[0][1] else ""
         print(f"  Route {route_num}: {fuel:,.0f} kg {marker}")
+# Use 3 qubits per flight (can encode 0-7, we use 0-4)
+QUBITS_PER_FLIGHT = 3
+num_qubits = NUM_FLIGHTS * QUBITS_PER_FLIGHT
+print(f"Circuit: {num_qubits} qubits ({QUBITS_PER_FLIGHT} per flight)")
 
-# Build QUBO Hamiltonian
-def compute_cost(solution_bitstring):
-    """Compute total cost for a given solution (bitstring -> route assignment)"""
+def bitstring_to_solution(bitstring):
+    """Convert bitstring to route assignments - FIXED VERSION"""
+    # Remove spaces and reverse to get [q0, q1, q2, q3, q4, q5, ...]
+    clean = bitstring.replace(' ', '')
+    bits = [int(b) for b in clean]  # DON'T reverse - use direct order
+    
     solution = []
     for flight in range(NUM_FLIGHTS):
-        bit_start = flight * QUBITS_PER_FLIGHT
-        bit_end = bit_start + QUBITS_PER_FLIGHT
-        flight_bits = solution_bitstring[bit_start:bit_end]
-        route_choice = int(''.join(map(str, flight_bits)), 2) % ROUTES_PER_FLIGHT
-        route_idx = flight * ROUTES_PER_FLIGHT + route_choice
-        solution.append(route_idx)
+        start_idx = flight * QUBITS_PER_FLIGHT
+        # Get the 3 qubits for this flight in correct order
+        qubits = bits[start_idx:start_idx + QUBITS_PER_FLIGHT]
+        
+        # Convert binary to decimal: q2 q1 q0 -> (q2*4 + q1*2 + q0)
+        route_num = qubits[0] * 4 + qubits[1] * 2 + qubits[2]
+        
+        # Only use valid routes (0-4 for 5 routes per flight)
+        if route_num < ROUTES_PER_FLIGHT:
+            route_idx = flight * ROUTES_PER_FLIGHT + route_num
+            solution.append(route_idx)
+        else:
+            # For invalid encodings, use route 0 but apply penalty in cost function
+            route_idx = flight * ROUTES_PER_FLIGHT
+            solution.append(route_idx)
     
-    # Calculate cost
+    return solution
+
+# Build QUBO Hamiltonian
+def compute_cost(bitstring):
+    """Calculate total cost for a bitstring with penalty for invalid routes"""
+    solution = bitstring_to_solution(bitstring)
+    
     fuel = sum(cost_matrix[r][r] for r in solution)
     conflicts = sum(
         cost_matrix[solution[i]][solution[j]]
         for i in range(NUM_FLIGHTS)
         for j in range(i + 1, NUM_FLIGHTS)
     )
-    return fuel + conflicts, solution
+    
+    # Add penalty for invalid route encodings
+    penalty = 0
+    clean = bitstring.replace(' ', '')
+    bits = [int(b) for b in clean]
+    
+    for flight in range(NUM_FLIGHTS):
+        start_idx = flight * QUBITS_PER_FLIGHT
+        qubits = bits[start_idx:start_idx + QUBITS_PER_FLIGHT]
+        route_num = qubits[0] * 4 + qubits[1] * 2 + qubits[2]
+        if route_num >= ROUTES_PER_FLIGHT:
+            penalty += 50000  # Large penalty for invalid routes
+    
+    total_cost = fuel + conflicts + penalty
+    
+    # Debug output for diverse solutions
+    routes = [r % ROUTES_PER_FLIGHT for r in solution]
+    if len(set(routes)) > 1 or routes != [0, 0, 0, 0, 0]:  # Only show non-trivial solutions
+        print(f"DEBUG: {bitstring} → routes {routes} → cost {total_cost:,.0f}")
+        
+    return total_cost, solution
+
 
 # Encode with 2 qubits per flight (4 possible routes: 00,01,10,11)
 QUBITS_PER_FLIGHT = 3
@@ -112,91 +156,88 @@ num_qubits = NUM_FLIGHTS * QUBITS_PER_FLIGHT
 
 print(f"Circuit: {num_qubits} qubits ({QUBITS_PER_FLIGHT} per flight)")
 
-def create_qaoa_circuit(gamma, beta, p=1):
+def create_qaoa(gamma, beta):
     """Create QAOA circuit with p layers"""
     qc = QuantumCircuit(num_qubits, num_qubits)
     
     # Initial superposition
     qc.h(range(num_qubits))
     
-    for _ in range(p):
-        # Cost Hamiltonian: Encode fuel costs and conflicts
-        for flight in range(NUM_FLIGHTS):
-            q_start = flight * QUBITS_PER_FLIGHT
-            start_route = flight * ROUTES_PER_FLIGHT
-            
-            # Encode relative costs for this flight's routes
-            costs = [cost_matrix[start_route + r][start_route + r] 
-                    for r in range(min(4, ROUTES_PER_FLIGHT))]
-            avg_cost = np.mean(costs)
-            
-            for r in range(min(4, ROUTES_PER_FLIGHT)):
-                weight = (costs[r] - avg_cost) / 1000.0  # Normalize
-                
-                if r == 0:    # Route 00
-                    pass
-                elif r == 1:  # Route 001
-                    qc.rz(gamma * weight, q_start)
-                elif r == 2:  # Route 010
-                    qc.rz(gamma * weight, q_start + 1)
-                elif r == 3:  # Route 011
-                    qc.rz(gamma * weight, q_start)
-                    qc.rz(gamma * weight, q_start + 1)
-                elif r == 4:  # Route 100  
-                    qc.rz(gamma * weight, q_start)
+     # COST LAYER: Encode fuel costs using proper phase encoding
+    for flight in range(NUM_FLIGHTS):
+        route_offset = flight * ROUTES_PER_FLIGHT
+        q_base = flight * QUBITS_PER_FLIGHT
         
-        # Entangle flights to encode conflicts
-        for i in range(NUM_FLIGHTS - 1):
-            q1 = i * QUBITS_PER_FLIGHT
-            q2 = (i + 1) * QUBITS_PER_FLIGHT
-            qc.cx(q1, q2)
-            qc.cx(q1 + 1, q2 + 1)
-            qc.cx(q1 + 2, q2 + 2)
-        
-        # Mixing Hamiltonian
-        for q in range(num_qubits):
-            qc.rx(2 * beta, q)
+        # Encode fuel cost for each route
+        for route in range(ROUTES_PER_FLIGHT):
+            fuel_cost = cost_matrix[route_offset + route][route_offset + route]
+            angle = gamma * fuel_cost / 5000.0  # Normalize
+            
+            # Apply phase based on binary representation of route
+            # Route 0: 000 -> no phase
+            # Route 1: 001 -> phase on q0
+            # Route 2: 010 -> phase on q1  
+            # Route 3: 011 -> phase on q0 and q1
+            # Route 4: 100 -> phase on q2
+            
+            if route & 1:  # Bit 0 (least significant)
+                qc.rz(angle, q_base + 2)  # q0 is the third qubit in the group
+            if route & 2:  # Bit 1
+                qc.rz(angle, q_base + 1)  # q1 is the second qubit
+            if route & 4:  # Bit 2 (most significant)
+                qc.rz(angle, q_base + 0)  # q2 is the first qubit
+    
+    # CONFLICT PENALTY: Simple penalty for now
+    conflict_weight = gamma * 0.1
+    
+    # MIXING LAYER: Strong rotations
+    for q in range(num_qubits):
+        qc.rx(beta, q)
+        qc.ry(beta * 0.5, q)  # Additional rotation for better mixing
+    
     
     qc.measure_all()
     return qc
 
-def execute_circuit(gamma, beta):
-    """Run circuit and return expectation value"""
-    qc = create_qaoa_circuit(gamma, beta, p=2)  # Use p=2 layers
-    compiled = transpile(qc, simulator, optimization_level=3)
+# Optimize parameters
+simulator = Aer.get_backend('qasm_simulator')
+
+def run_circuit(gamma, beta):
+    """Execute circuit and return expectation"""
+    qc = create_qaoa(gamma, beta)
+    compiled = transpile(qc, simulator, optimization_level=1)
     
     job = simulator.run(compiled, shots=1024)
     result = job.result()
     counts = result.get_counts()
     
-    # Compute expectation value
     total_cost = 0
-    total_counts = 0
+    total_shots = sum(counts.values())
     
     for bitstring, count in counts.items():
-        # Remove spaces and convert bitstring to list of ints
-        clean_bitstring = bitstring.replace(' ', '')
-        bits = [int(b) for b in reversed(clean_bitstring)]
-        cost, _ = compute_cost(bits)
+        cost, _ = compute_cost(bitstring)
         total_cost += cost * count
-        total_counts += count
     
-    return total_cost / total_counts
+    return total_cost / total_shots
 
-# Optimize parameters
-simulator = Aer.get_backend('qasm_simulator')
 
 print("\nOptimizing QAOA parameters...")
+iteration = [0]
 def objective(params):
+    iteration[0] += 1
     gamma, beta = params
-    return execute_circuit(gamma, beta)
+    cost= run_circuit(gamma, beta)
+    if iteration[0] <= 10:
+        print(f"  Iteration {iteration[0]}: γ={gamma:.3f}, β={beta:.3f} → {cost:,.0f} kg")
+    return cost
+
 
 # Use COBYLA optimizer
 result = minimize(
     objective,
     x0=[0.5, 0.5],  # Initial guess
     method='COBYLA',
-    options={'maxiter': 30}
+    options={'maxiter': 8 , 'rhobeg':0.5}
 )
 
 optimal_gamma, optimal_beta = result.x
@@ -204,33 +245,60 @@ print(f" Optimal parameters: γ={optimal_gamma:.3f}, β={optimal_beta:.3f}")
 
 # Final run with optimized parameters
 print("\nRunning final quantum circuit...")
-qc = create_qaoa_circuit(optimal_gamma, optimal_beta, p=2)
+qc = create_qaoa(optimal_gamma, optimal_beta)
 compiled = transpile(qc, simulator, optimization_level=3)
-job = simulator.run(compiled, shots=2048)
+job = simulator.run(compiled, shots=8192)
 result = job.result()
 counts = result.get_counts()
+
+# Analyze results
+print("\nTOP 10 MEASURED STATES:")
+print("-" * 70)
+sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+
+top_solutions = []
+for i, (bitstring, count) in enumerate(sorted_counts[:10]):
+    cost, solution = compute_cost(bitstring)
+    routes = [r % ROUTES_PER_FLIGHT for r in solution]
+    prob = (count / 8192) * 100
+    
+    # Format for readability
+    clean = bitstring.replace(' ', '')
+    formatted = ' '.join([clean[j:j+3] for j in range(0, len(clean), 3)])
+    
+    print(f"{i+1:2d}. {formatted} → {routes} | {cost:,.0f} kg | {prob:.1f}%")
+    top_solutions.append((bitstring, cost, solution))
 
 # Find best solution
 best_solution = None
 best_cost = float('inf')
+best_bitstring = None
 
 for bitstring, count in counts.items():
-    clean_bitstring = bitstring.replace(' ', '')
-    bits = [int(b) for b in reversed(clean_bitstring)]
-    cost, solution = compute_cost(bits)
-    
+    cost, solution = compute_cost(bitstring)
     if cost < best_cost:
         best_cost = cost
         best_solution = solution
+        best_bitstring = bitstring
 
-# Calculate breakdown
+# Remove penalty from final cost calculation for display
+clean_best_bitstring = best_bitstring.replace(' ', '')
+bits = [int(b) for b in clean_best_bitstring]
+penalty = 0
+for flight in range(NUM_FLIGHTS):
+    start_idx = flight * QUBITS_PER_FLIGHT
+    qubits = bits[start_idx:start_idx + QUBITS_PER_FLIGHT]
+    route_num = qubits[0] * 4 + qubits[1] * 2 + qubits[2]
+    if route_num >= ROUTES_PER_FLIGHT:
+        penalty += 50000
+
 quantum_fuel = sum(cost_matrix[r][r] for r in best_solution)
 quantum_conflicts = sum(
     cost_matrix[best_solution[i]][best_solution[j]]
     for i in range(NUM_FLIGHTS)
     for j in range(i + 1, NUM_FLIGHTS)
 )
-
+actual_quantum_cost = quantum_fuel + quantum_conflicts
 print(f"\nRoutes: {[r % ROUTES_PER_FLIGHT for r in best_solution]}")
 print(f"Fuel:      {quantum_fuel:,.0f} kg")
 print(f"Conflicts: {quantum_conflicts:,.0f} kg")
