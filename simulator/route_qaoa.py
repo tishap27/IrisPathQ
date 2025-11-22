@@ -1,4 +1,3 @@
-#VERSION1
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import Aer
@@ -145,7 +144,8 @@ def compute_cost(bitstring):
     # Debug output for diverse solutions
     routes = [r % ROUTES_PER_FLIGHT for r in solution]
     if len(set(routes)) > 1 or routes != [0, 0, 0, 0, 0]:  # Only show non-trivial solutions
-        print(f"DEBUG: {bitstring} → routes {routes} → cost {total_cost:,.0f}")
+        #print(f"DEBUG: {bitstring} → routes {routes} → cost {total_cost:,.0f}")
+        pass
         
     return total_cost, solution
 

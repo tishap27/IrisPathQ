@@ -19,7 +19,7 @@ int main() {
     printf("Loading data...\n");
     load_flights("data/flights.csv", &problem);
     load_waypoints("data/waypoints.csv", &problem);
-    load_weather("data/weatherTS.csv", &problem);
+    load_weather("data/weatherTS2.csv", &problem);
     
     //DEBUG
     printf("\n=== STORM CHECK ===\n");
@@ -81,14 +81,15 @@ for (int i = 0; i < problem.num_waypoints; i++) {
     
 
 
-
+return 0;
+}
 
     //  MILP 
-printf("\n====================================\n");
+/*printf("\n====================================\n");
 printf("MILP Solver\n");
-printf("====================================\n\n");
+printf("====================================\n\n");*/
 
-compare_milp_greedy(&problem);
-    free(cost_matrix);
-    return 0;
-}
+/*compare_milp_greedy(&problem);
+    free(cost_matrix);*/
+    //return 0;
+//}
