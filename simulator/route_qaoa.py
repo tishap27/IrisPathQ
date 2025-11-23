@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 import sys
 
 print("=" * 70)
-print("CORRECTED QAOA ROUTE OPTIMIZER")
+print("QAOA ROUTE OPTIMIZER")
 print("=" * 70)
 
 # Load cost matrix

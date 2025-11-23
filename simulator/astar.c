@@ -497,42 +497,6 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
     return problem->num_routes_per_flight[flight_idx];
 }
 
-//Artificial Conflicts for now 
-//For each flight N, it takes the second-last waypoint from Flight N's Route 0 and 
-//inserts that waypoint into the second position of Flight N+1's Route 0. e.g 
-//Flight 1 -> A->B->C->D
-//Flight2 -> F->G->H->I
-//fucntion will make flight 2 path t  go via B new route F2: F->A->GHI
-//for Route 0 of every plane    
-/*void inject_conflicts(ProblemInstance *problem) {
-    printf("\nInjecting strategic conflicts for quantum demonstration...\n");
-    
-    int conflicts_added = 0;
-    
-    // Create chain of conflicts: Flight N's Route 0 conflicts with Flight N+1's Route 0
-    for (int f = 0; f < problem->num_flights - 1; f++) {
-        Route *current = &problem->routes[f][0];
-        Route *next = &problem->routes[f+1][0];
-        
-        if (current->num_waypoints > 1 && next->num_waypoints < MAX_WAYPOINTS_PER_ROUTE - 1) {
-            // Share a waypoint
-            int shared_wp = current->waypoint_indices[current->num_waypoints - 2];
-            
-            // Insert into next route
-            for (int w = next->num_waypoints; w > 1; w--) {
-                next->waypoint_indices[w] = next->waypoint_indices[w-1];
-            }
-            next->waypoint_indices[1] = shared_wp;
-            next->num_waypoints++;
-            
-            conflicts_added++;
-            printf("  Flight %d Route 0 <-> Flight %d Route 0\n", f, f+1);
-        }
-    }
-    
-    printf("Added %d strategic conflicts\n\n", conflicts_added);
-}
-*/
 // Build cost matrix for QUBO encoding
 
 void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matrix_size) {
