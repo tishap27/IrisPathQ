@@ -1,0 +1,37 @@
+Full Cost Matrix (25 x 25)
+================================
+
+      Col0     Col1     Col2     Col3     Col4     Col5     Col6     Col7     Col8     Col9     Col10    Col11    Col12    Col13    Col14    Col15    Col16    Col17    Col18    Col19    Col20    Col21    Col22    Col23    Col24    
+      -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- -------- 
+Row0  |    22947     0        0        0        0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT
+Row1  |     0       20462     0        0        0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT
+Row2  |     0        0       14686     0        0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT
+Row3  |     0        0        0       19139     0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT
+Row4  |     0        0        0        0       19671  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT
+Row5  |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT   10386     0        0        0        0        0        0     CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT
+Row6  |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0       13757     0        0        0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT
+Row7  |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0       20509     0        0        0        0     CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT
+Row8  |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0        0        7905     0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT
+Row9  |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0        0        0        8771  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT
+Row10 |     0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT   11112     0        0        0        0        0     CONFLICT    0        0        0        0     CONFLICT    0        0        0    
+Row11 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0       13549     0        0        0        0     CONFLICT    0        0        0        0     CONFLICT    0        0        0    
+Row12 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0       21725     0        0        0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT CONFLICT    0     CONFLICT
+Row13 |     0     CONFLICT    0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0        0        9407     0        0     CONFLICT    0     CONFLICT    0        0     CONFLICT    0     CONFLICT    0    
+Row14 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0        0        0        7062     0     CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT    0        0     CONFLICT
+Row15 |     0        0        0        0        0        0        0        0        0        0        0        0        0        0        0        7729     0        0        0        0        0        0        0        0        0    
+Row16 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0       14395     0        0        0        0     CONFLICT    0     CONFLICT    0    
+Row17 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0     CONFLICT    0     CONFLICT    0        0       27150     0        0        0        0     CONFLICT    0     CONFLICT
+Row18 |     0     CONFLICT    0        0        0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0        0     CONFLICT    0        0        0        0        7867     0        0     CONFLICT    0     CONFLICT    0    
+Row19 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0     CONFLICT    0     CONFLICT    0        0        0        0       10366     0        0        0        0     CONFLICT
+Row20 |     0        0        0        0        0        0        0        0        0        0        0        0        0        0        0        0        0        0        0        0       17424     0        0        0        0    
+Row21 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0     CONFLICT    0     CONFLICT    0        0       22515     0        0        0    
+Row22 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0     CONFLICT    0        0        0        0     CONFLICT    0        0        0        0     CONFLICT    0        0        0        0       13553     0        0    
+Row23 |     0     CONFLICT    0        0        0     CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0        0     CONFLICT    0        0     CONFLICT    0     CONFLICT    0        0        0        0       15992     0    
+Row24 |  CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT CONFLICT    0        0     CONFLICT    0     CONFLICT    0        0     CONFLICT    0     CONFLICT    0        0        0        0       15151 
+
+================================
+Legend:
+  Diagonal entries = Fuel costs (kg)
+ (0,0) is flight 0 taking route 0 its fuel cost, where rows 0 to 4 is flight routes fro the zeroth flight(AC101), similary col 0 to 4 is allroutes available for Flight 0  
+  CONFLICT = Route conflict penalty; No conflicts for now (10000+ kg)
+  0 = No interaction
