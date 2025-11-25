@@ -81,5 +81,14 @@ for (int i = 0; i < problem.num_waypoints; i++) {
     
 
 free(cost_matrix);
-return 0;
+    
+//  MILP 
+printf("\n====================================\n");
+printf("MILP Solver\n");
+printf("====================================\n\n");
+
+compare_milp_greedy(&problem);
+    free(cost_matrix);
+    return 0;
 }
+
