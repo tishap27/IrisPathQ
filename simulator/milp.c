@@ -1,6 +1,6 @@
 /**
  * MILP Solver for IrisPathQ
- * Solves flight routing as Integer Program using GLPK
+ * Solves flight routing as Integer Program using GLPK  ORIGINAL
  */
 
 #include "data_structures.h"
@@ -33,7 +33,7 @@ int solve_milp(ProblemInstance *problem, int *solution, double *optimal_cost) {
     for (int f = 0; f < num_flights; f++) {
         for (int r = 0; r < problem->num_routes_per_flight[f]; r++) {
             char var_name[50];
-            sprintf(var_name, "x[%d][%d]", f, r);
+            sprintf(var_name, "*[%d][%d]", f, r);
             glp_set_col_name(lp, var_idx, var_name);
             glp_set_col_kind(lp, var_idx, GLP_BV);  // Binary variable
             

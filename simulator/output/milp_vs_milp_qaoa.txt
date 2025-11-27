@@ -1,0 +1,20 @@
+MILP vs MILP+QAOA Comparison Results
+======================================
+
+Problem: 5 flights x 5 routes/flight
+
+MILP (Classical Exact Optimization):
+  Routes: [2, 3, 4, 0, 2]
+  Fuel: 50,935 kg
+  Conflicts: 4
+  TOTAL: 90,935 kg
+
+MILP + QAOA (Quantum Enhanced):
+  Routes: [2, 0, 0, 0, 0]
+  Fuel: 61,337 kg
+  Conflicts: 1
+  TOTAL: 71,337 kg
+
+Quantum Enhancement: 19,598 kg (+21.55%)
+
+Status: Quantum beat exact solver

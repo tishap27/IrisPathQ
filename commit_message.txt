@@ -1,6 +1,5 @@
-fix: resolve QAOA bitstring decoding causing [0,0,0,0,0] bias
-
-- Fix bitstring-to-solution mapping (remove reversed())
-- Add explicit penalties for invalid route encodings (101, 110, 111)
-- Improve QAOA circuit with proper binary phase encoding for all 5 routes
-- Add RY rotations to mixing layer for better state exploration
+Add: milp_qaoa.py
+-Implement basic MILP solver using GLPK
+- Add QAOA comparison script for MILP baseline
+- Generate cost matrix output for quantum optimization
+- Track comparison results in milp_vs_milp_qaoa.txt"
