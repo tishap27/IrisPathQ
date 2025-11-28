@@ -1,5 +1,8 @@
-Add: milp_qaoa.py
--Implement basic MILP solver using GLPK
-- Add QAOA comparison script for MILP baseline
-- Generate cost matrix output for quantum optimization
-- Track comparison results in milp_vs_milp_qaoa.txt"
+feat: add A* baseline comparison to MILP solver
+
+- Add A* solution tracking (Route 0 for each flight)
+- Implement three-way comparison: A* vs Greedy vs MILP
+- Update results summary with improved ranking display
+- Show that A* prioritizes weather safety over fuel efficiency
+- Results: MILP (50,935 kg) < Greedy (53,417 kg) < A* (69,598 kg)
+- MILP beats A* by 26.8%, demonstrates global optimization advantage
