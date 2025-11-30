@@ -104,5 +104,6 @@ int astar_find_route_with_weather(ProblemInstance *problem, int origin_idx, int 
 // MILP
 int solve_milp(ProblemInstance *problem, int *solution, double *optimal_cost);
 void compare_milp_greedy(ProblemInstance *problem);
+int find_waypoint_index(ProblemInstance *problem, const char *id);
 
 #endif

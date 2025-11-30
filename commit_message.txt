@@ -1,8 +1,8 @@
-feat: add A* baseline comparison to MILP solver
+Add standalone MILP, route generator, and QAOA comparison
 
-- Add A* solution tracking (Route 0 for each flight)
-- Implement three-way comparison: A* vs Greedy vs MILP
-- Update results summary with improved ranking display
-- Show that A* prioritizes weather safety over fuel efficiency
-- Results: MILP (50,935 kg) < Greedy (53,417 kg) < A* (69,598 kg)
-- MILP beats A* by 26.8%, demonstrates global optimization advantage
+- Added milp_main.c to run MILP independently of A*
+- Added route_generator.c to produce 5 alternative routes per flight
+- Updated milp.c with GLPK MILP formulation (fuel + conflict penalties)
+- Updated data_structures.h to support MILP route sets
+- Updated main.c, removed compare_milp_greedy dependency
+- Updated milp_qaoa.py to load MILP matrix and print full results on console
