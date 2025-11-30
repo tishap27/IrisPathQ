@@ -54,7 +54,7 @@ int build_cost_matrixMILP(ProblemInstance *p, double *M, int N)
 
                     if (routes_conflict(&p->routes[f1][r1],
                                         &p->routes[f2][r2]))
-                        M[idx1 * N + idx2] = 50000.0;  // penalty
+                        M[idx1 * N + idx2] = 10000.0;  // penalty
                     else
                         M[idx1 * N + idx2] = 0.0;
                 }

@@ -3,30 +3,30 @@
 ============================
 
 FLIGHT AC101 (YYZ → YVR)
-ROUTE 0: YYZ YYC YVR 
-  Distance: 3304.40 nm
-  Fuel: 22947.24 kg
-  Time: 7.34 hrs
+ROUTE 0: YYZ YVR 
+  Distance: 1806.46 nm
+  Fuel: 12544.89 kg
+  Time: 4.01 hrs
 
-ROUTE 1: YYZ YOW YUL YYC YVR 
-  Distance: 3683.17 nm
-  Fuel: 20462.04 kg
-  Time: 8.18 hrs
+ROUTE 1: YYZ YUL YVR 
+  Distance: 2261.64 nm
+  Fuel: 12564.67 kg
+  Time: 5.03 hrs
 
 ROUTE 2: YYZ YYC YVR 
-  Distance: 3304.40 nm
-  Fuel: 14686.23 kg
-  Time: 7.34 hrs
+  Distance: 1822.67 nm
+  Fuel: 8100.77 kg
+  Time: 4.05 hrs
 
-ROUTE 3: YYZ YEG YYC YVR 
-  Distance: 3445.01 nm
-  Fuel: 19138.93 kg
-  Time: 7.66 hrs
+ROUTE 3: YYZ YEG YVR 
+  Distance: 1888.85 nm
+  Fuel: 10493.60 kg
+  Time: 4.20 hrs
 
-ROUTE 4: YYZ YOW YYC YVR 
-  Distance: 3540.83 nm
-  Fuel: 19671.26 kg
-  Time: 7.87 hrs
+ROUTE 4: YYZ YOW YVR 
+  Distance: 2113.78 nm
+  Fuel: 11743.20 kg
+  Time: 4.70 hrs
 
 END
 
@@ -36,25 +36,25 @@ ROUTE 0: YUL YYC
   Fuel: 10386.27 kg
   Time: 3.61 hrs
 
-ROUTE 1: YUL YOW YYZ YYC 
-  Distance: 2579.46 nm
-  Fuel: 13757.10 kg
-  Time: 5.73 hrs
+ROUTE 1: YUL YYZ YYC 
+  Distance: 1725.87 nm
+  Fuel: 9204.62 kg
+  Time: 3.84 hrs
 
-ROUTE 2: YUL YYC YVR YYC 
-  Distance: 3845.45 nm
-  Fuel: 20509.06 kg
-  Time: 8.55 hrs
+ROUTE 2: YUL YVR YYC 
+  Distance: 2358.45 nm
+  Fuel: 12578.39 kg
+  Time: 5.24 hrs
 
 ROUTE 3: YUL YEG YYC 
-  Distance: 1743.66 nm
-  Fuel: 7904.60 kg
-  Time: 3.87 hrs
+  Distance: 1735.82 nm
+  Fuel: 7869.03 kg
+  Time: 3.86 hrs
 
 ROUTE 4: YUL YOW YYC 
-  Distance: 1644.53 nm
-  Fuel: 8770.84 kg
-  Time: 3.65 hrs
+  Distance: 1636.07 nm
+  Fuel: 8725.71 kg
+  Time: 3.64 hrs
 
 END
 
@@ -64,25 +64,25 @@ ROUTE 0: YEG YOW
   Fuel: 11111.53 kg
   Time: 3.42 hrs
 
-ROUTE 1: YEG YOW YYZ YOW 
-  Distance: 2709.87 nm
-  Fuel: 13549.34 kg
-  Time: 6.02 hrs
+ROUTE 1: YEG YYZ YOW 
+  Distance: 1648.22 nm
+  Fuel: 8241.08 kg
+  Time: 3.66 hrs
 
-ROUTE 2: YEG YYC YVR YOW 
-  Distance: 3910.57 nm
-  Fuel: 21725.37 kg
-  Time: 8.69 hrs
+ROUTE 2: YEG YVR YOW 
+  Distance: 2354.41 nm
+  Fuel: 13080.04 kg
+  Time: 5.23 hrs
 
 ROUTE 3: YEG YUL YOW 
-  Distance: 1693.23 nm
-  Fuel: 9406.85 kg
-  Time: 3.76 hrs
+  Distance: 1684.77 nm
+  Fuel: 9359.84 kg
+  Time: 3.74 hrs
 
 ROUTE 4: YEG YYC YOW 
-  Distance: 1694.96 nm
-  Fuel: 7062.34 kg
-  Time: 3.77 hrs
+  Distance: 1687.11 nm
+  Fuel: 7029.64 kg
+  Time: 3.75 hrs
 
 END
 
@@ -92,15 +92,15 @@ ROUTE 0: YWG YHZ
   Fuel: 7729.46 kg
   Time: 3.09 hrs
 
-ROUTE 1: YWG YOW YYZ YOW YUL YHZ 
-  Distance: 2591.13 nm
-  Fuel: 14395.18 kg
-  Time: 5.76 hrs
+ROUTE 1: YWG YYZ YHZ 
+  Distance: 1507.72 nm
+  Fuel: 8376.25 kg
+  Time: 3.35 hrs
 
-ROUTE 2: YWG YYC YVR YHZ 
-  Distance: 4886.98 nm
-  Fuel: 27149.89 kg
-  Time: 10.86 hrs
+ROUTE 2: YWG YVR YHZ 
+  Distance: 3397.74 nm
+  Fuel: 18876.32 kg
+  Time: 7.55 hrs
 
 ROUTE 3: YWG YUL YHZ 
   Distance: 1416.13 nm
@@ -120,15 +120,15 @@ ROUTE 0: YYJ YYT
   Fuel: 17423.75 kg
   Time: 6.06 hrs
 
-ROUTE 1: YYJ YOW YYZ YOW YUL YYT 
-  Distance: 4052.71 nm
-  Fuel: 22515.07 kg
-  Time: 9.01 hrs
+ROUTE 1: YYJ YYZ YYT 
+  Distance: 2966.35 nm
+  Fuel: 16479.74 kg
+  Time: 6.59 hrs
 
 ROUTE 2: YYJ YVR YYT 
-  Distance: 2870.01 nm
-  Fuel: 13552.82 kg
-  Time: 6.38 hrs
+  Distance: 2738.13 nm
+  Fuel: 12930.08 kg
+  Time: 6.08 hrs
 
 ROUTE 3: YYJ YUL YYT 
   Distance: 2878.54 nm
