@@ -368,3 +368,119 @@ Status: {'QAOA wins' if improvement > 0 else 'Equal' if improvement == 0 else 'M
 
 print("\nResults saved to output/milp_vs_qaoa_results.txt")
 print("=" * 90)
+
+# ------------------------------
+# Public wrapper for unified use
+# ------------------------------
+def qaoa_solve(cost_matrix, num_flights=5, shots=8192, opt_maxiter=8):
+    """
+    Entrypoint used by UnifiedComparison.py
+    - cost_matrix : numpy.ndarray (N x N)
+    - num_flights : number of flights (default 5)
+    Returns: (selection_list_of_global_indices, total_cost)
+    """
+    import numpy as _np
+    from scipy.optimize import minimize as _minimize
+    from qiskit import QuantumCircuit, transpile
+    from qiskit_aer import Aer
+
+    N = cost_matrix.shape[0]
+    routes_per_flight = N // num_flights
+
+    # local copies of helper functions adapted from file
+    QUBITS_PER_FLIGHT = 3
+    num_qubits = num_flights * QUBITS_PER_FLIGHT
+    simulator = Aer.get_backend('qasm_simulator')
+
+    def bitstring_to_solution_local(bitstring):
+        clean = bitstring.replace(' ', '')
+        bits = [int(b) for b in clean]
+        solution = []
+        for flight in range(num_flights):
+            start_idx = flight * QUBITS_PER_FLIGHT
+            qubits = bits[start_idx:start_idx + QUBITS_PER_FLIGHT]
+            route_num = qubits[0] * 4 + qubits[1] * 2 + qubits[2]
+            if route_num < routes_per_flight:
+                solution.append(flight * routes_per_flight + route_num)
+            else:
+                solution.append(flight * routes_per_flight)
+        return solution
+
+    def compute_cost_local(bitstring):
+        sol = bitstring_to_solution_local(bitstring)
+        fuel = sum(cost_matrix[r, r] for r in sol)
+        conflicts = sum(cost_matrix[sol[i], sol[j]] for i in range(num_flights) for j in range(i+1, num_flights))
+        penalty = 0
+        clean = bitstring.replace(' ', '')
+        bits = [int(b) for b in clean]
+        for flight in range(num_flights):
+            start_idx = flight * QUBITS_PER_FLIGHT
+            qubits = bits[start_idx:start_idx + QUBITS_PER_FLIGHT]
+            route_num = qubits[0] * 4 + qubits[1] * 2 + qubits[2]
+            if route_num >= routes_per_flight:
+                penalty += 50000
+        return fuel + conflicts + penalty, sol
+
+    def create_qaoa_local(gamma, beta):
+        qc = QuantumCircuit(num_qubits, num_qubits)
+        qc.h(range(num_qubits))
+        # cost layer (encode diagonals)
+        for flight in range(num_flights):
+            route_offset = flight * routes_per_flight
+            q_base = flight * QUBITS_PER_FLIGHT
+            for route in range(routes_per_flight):
+                fuel_cost = cost_matrix[route_offset + route, route_offset + route]
+                angle = gamma * fuel_cost / 5000.0
+                if route & 1:
+                    qc.rz(angle, q_base + 2)
+                if route & 2:
+                    qc.rz(angle, q_base + 1)
+                if route & 4:
+                    qc.rz(angle, q_base + 0)
+        # conflict penalty (light)
+        conflict_weight = gamma * 0.1
+        # (for simplicity we skip heavy entangling per pair to keep circuits small)
+        for q in range(num_qubits):
+            qc.rx(beta, q)
+            qc.ry(beta * 0.5, q)
+        qc.measure_all()
+        return qc
+
+    def run_circuit_local(gamma, beta, shots_local=1024):
+        qc = create_qaoa_local(gamma, beta)
+        compiled = transpile(qc, simulator, optimization_level=1)
+        job = simulator.run(compiled, shots=shots_local)
+        res = job.result()
+        counts = res.get_counts()
+        total_cost = 0.0
+        total_shots = sum(counts.values())
+        for bitstring, cnt in counts.items():
+            cost, _ = compute_cost_local(bitstring)
+            total_cost += cost * cnt
+        return total_cost / total_shots
+
+    # Optimize small number of iterations (COBYLA)
+    def objective(params):
+        g, b = params
+        return run_circuit_local(g, b, shots_local=1024)
+
+    result = _minimize(objective, x0=[0.5, 0.5], method='COBYLA', options={'maxiter': opt_maxiter, 'rhobeg': 0.5})
+    gamma_opt, beta_opt = result.x
+
+    # final run
+    qc_final = create_qaoa_local(gamma_opt, beta_opt)
+    compiled = transpile(qc_final, simulator, optimization_level=3)
+    job = simulator.run(compiled, shots=shots)
+    res = job.result()
+    counts = res.get_counts()
+
+    # pick best measured state
+    best_cost = float('inf')
+    best_solution = None
+    for bitstring, cnt in counts.items():
+        cost, solution = compute_cost_local(bitstring)
+        if cost < best_cost:
+            best_cost = cost
+            best_solution = solution
+
+    return best_solution, best_cost

@@ -1,7 +1,7 @@
 MILP vs MILP+QAOA Comparison Results
 ======================================
 
-Problem: 5 flights × 5 routes
+Problem: 5 flights * 5 routes
 
 MILP (Greedy, Local Optimization):
   Routes: [0, 0, 0, 0, 0]

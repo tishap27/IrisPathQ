@@ -10,6 +10,10 @@ route_optimizer
 .ipynb_checkpoints/
 **/.ipynb_checkpoints/
 
+# Python cache
+__pycache__/
+
+
 # Temporary files
 *~
 *.tmp
