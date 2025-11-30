@@ -1,11 +1,12 @@
 /**
  * MILP Solver for Route Optimization (GLPK)
+
  */
 
 #include "data_structures.h"
 #include <glpk.h>
 
-// conflict check: share ≥3 consecutive waypoints → conflict
+// conflict check: share >=3 consecutive waypoints -> conflict
 int routes_conflict(Route *a, Route *b) {
     int max_consec = 0;
 

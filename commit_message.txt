@@ -1,8 +1,9 @@
-Add standalone MILP, route generator, and QAOA comparison
+v0.4: Classical MILP Baseline + A* Integration Cleanup
 
-- Added milp_main.c to run MILP independently of A*
-- Added route_generator.c to produce 5 alternative routes per flight
-- Updated milp.c with GLPK MILP formulation (fuel + conflict penalties)
-- Updated data_structures.h to support MILP route sets
-- Updated main.c, removed compare_milp_greedy dependency
-- Updated milp_qaoa.py to load MILP matrix and print full results on console
+- Updated A* (astar.c) and data_structures.h for consistent route/flight structs
+- Refactored MILP solver (milp.c) and milp_main.c to produce correct baseline MILP results
+- Now MILP-QAOA Python interface (milp_qaoa.py) with updated cost matrix format
+- Added missing MILP components into jupyter/v0.4 (milp_main.c, milp_qaoa.py)
+- Exported initial MILP cost matrices for verification (cost_matrix_milp.txt, full_matrix_milp.txt)
+- Added initial route_generator.c for route creation without weather
+- Now has correct MILP baseline

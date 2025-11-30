@@ -7,190 +7,154 @@
 #include "data_structures.h"
 #include <glpk.h>
 
-/**
- * Solve multi-flight routing using MILP
- * 
- * Decision Variables:
- *   x[f][r] ∈ {0,1} = 1 if flight f uses route r
- * 
- * Objective:
- *   minimize: Σ(fuel[f][r] * x[f][r]) + Σ(conflict_penalty * x[f1][r1] * x[f2][r2])
- * 
- * Constraints:
- *   1) Each flight picks exactly one route: Σ(x[f][r]) = 1 ∀f
- *   2) No conflicts: x[f1][r1] + x[f2][r2] ≤ 1 if routes conflict
- */
-int solve_milp(ProblemInstance *problem, int *solution, double *optimal_cost) {
-    printf("\n====================================\n");
-    printf("MILP OPTIMIZATION (GLPK)\n");
-    printf("====================================\n\n");
+// conflict check: share ≥3 consecutive waypoints → conflict
+int routes_conflict(Route *a, Route *b) {
+    int max_consec = 0;
 
-    // Create GLPK problem
-    glp_prob *lp = glp_create_prob();
-    glp_set_prob_name(lp, "FlightRouting");
-    glp_set_obj_dir(lp, GLP_MIN);  // Minimize cost
+    for (int i = 0; i < a->num_waypoints - 1; i++) {
+        for (int j = 0; j < b->num_waypoints - 1; j++) {
+            int consec = 0;
 
-    // Calculate problem dimensions
-    int num_flights = problem->num_flights;
-    int total_vars = 0;
-    for (int f = 0; f < num_flights; f++) {
-        total_vars += problem->num_routes_per_flight[f];
+            while (i + consec < a->num_waypoints &&
+                   j + consec < b->num_waypoints &&
+                   a->waypoint_indices[i + consec] ==
+                   b->waypoint_indices[j + consec]) {
+                consec++;
+            }
+
+            if (consec > max_consec)
+                max_consec = consec;
+        }
     }
 
-    printf("Problem size: %d flights, %d total routes\n", num_flights, total_vars);
+    return (max_consec >= 3);
+}
 
-    // Add binary variables: x[f][r] ∈ {0,1}
+int get_variable_index(ProblemInstance *p, int f, int r) {
+    int idx = 1;
+    for (int i = 0; i < f; i++)
+        idx += p->num_routes_per_flight[i];
+    return idx + r;
+}
+
+int solve_milp(ProblemInstance *p, int *solution, double *optimal_cost) {
+    int num_flights = p->num_flights;
+
+    // Count variables
+    int total_vars = 0;
+    for (int f = 0; f < num_flights; f++)
+        total_vars += p->num_routes_per_flight[f];
+
+    glp_prob *lp = glp_create_prob();
+    glp_set_prob_name(lp, "MILP_Routing");
+    glp_set_obj_dir(lp, GLP_MIN);
+
+    // Add variables
     glp_add_cols(lp, total_vars);
 
-    int var_idx = 1;  // GLPK is 1-indexed
+    int var = 1;
     for (int f = 0; f < num_flights; f++) {
-        for (int r = 0; r < problem->num_routes_per_flight[f]; r++) {
-            char var_name[50];
-            sprintf(var_name, "x[%d][%d]", f, r);
-            glp_set_col_name(lp, var_idx, var_name);
-            glp_set_col_kind(lp, var_idx, GLP_BV);  // Binary variable
+        for (int r = 0; r < p->num_routes_per_flight[f]; r++) {
 
-            // Set objective coefficient (fuel cost)
-            double fuel_cost = problem->routes[f][r].fuel_cost;
-            glp_set_obj_coef(lp, var_idx, fuel_cost);
+            char name[32];
+            sprintf(name, "x_%d_%d", f, r);
 
-            var_idx++;
+            glp_set_col_name(lp, var, name);
+            glp_set_col_kind(lp, var, GLP_BV); // binary
+
+            glp_set_obj_coef(lp, var, p->routes[f][r].fuel_cost);
+
+            var++;
         }
     }
 
-    // CONSTRAINT 1: Each flight picks exactly one route
-    // Σ(x[f][r]) = 1 for each flight f
+    // Constraint 1: each flight selects exactly one route
     glp_add_rows(lp, num_flights);
+    int row = 1;
 
-    var_idx = 1;
     for (int f = 0; f < num_flights; f++) {
-        int num_routes = problem->num_routes_per_flight[f];
+        int N = p->num_routes_per_flight[f];
 
-        // Arrays for constraint (1-indexed)
-        int *ind = (int*)malloc((num_routes + 1) * sizeof(int));
-        double *val = (double*)malloc((num_routes + 1) * sizeof(double));
+        int *ind = malloc((N + 1) * sizeof(int));
+        double *val = malloc((N + 1) * sizeof(double));
 
-        for (int r = 0; r < num_routes; r++) {
-            ind[r + 1] = var_idx + r;  // Column index
-            val[r + 1] = 1.0;          // Coefficient
+        for (int r = 0; r < N; r++) {
+            ind[r + 1] = get_variable_index(p, f, r);
+            val[r + 1] = 1;
         }
 
-        glp_set_row_name(lp, f + 1, problem->flights[f].flight_id);
-        glp_set_row_bnds(lp, f + 1, GLP_FX, 1.0, 1.0);  // = 1
-        glp_set_mat_row(lp, f + 1, num_routes, ind, val);
+        char rowname[32];
+        sprintf(rowname, "flight_%d", f);
+        glp_set_row_name(lp, row, rowname);
+        glp_set_row_bnds(lp, row, GLP_FX, 1, 1);
+
+        glp_set_mat_row(lp, row, N, ind, val);
 
         free(ind);
         free(val);
 
-        var_idx += num_routes;
+        row++;
     }
 
-    // No hard conflict constraints - just minimize fuel cost
-    printf("\nMILP will find minimum fuel solution\n");
-    printf("(Conflicts handled via route fuel penalties already in A*)\n");
+    // Constraint 2: conflict avoidance
+    int conflict_count = 0;
+    for (int f1 = 0; f1 < num_flights; f1++)
+        for (int r1 = 0; r1 < p->num_routes_per_flight[f1]; r1++)
+            for (int f2 = f1 + 1; f2 < num_flights; f2++)
+                for (int r2 = 0; r2 < p->num_routes_per_flight[f2]; r2++)
+                    if (routes_conflict(&p->routes[f1][r1], &p->routes[f2][r2]))
+                        conflict_count++;
 
-    // Solve the MIP
-    printf("\nSolving MILP...\n");
+    glp_add_rows(lp, conflict_count);
+    int cur = row;
+    int added = 0;
 
+    for (int f1 = 0; f1 < num_flights; f1++)
+        for (int r1 = 0; r1 < p->num_routes_per_flight[f1]; r1++)
+            for (int f2 = f1 + 1; f2 < num_flights; f2++)
+                for (int r2 = 0; r2 < p->num_routes_per_flight[f2]; r2++)
+                    if (routes_conflict(&p->routes[f1][r1],
+                                        &p->routes[f2][r2])) {
+
+                        int v1 = get_variable_index(p, f1, r1);
+                        int v2 = get_variable_index(p, f2, r2);
+
+                        int ind[3] = {0, v1, v2};
+                        double val[3] = {0, 1.0, 1.0};
+
+                        char rn[64];
+                        sprintf(rn, "conflict_%d_%d__%d_%d", f1, r1, f2, r2);
+
+                        glp_set_row_name(lp, cur, rn);
+                        glp_set_row_bnds(lp, cur, GLP_UP, 0.0, 1.0);
+                        glp_set_mat_row(lp, cur, 2, ind, val);
+
+                        cur++;
+                        added++;
+                    }
+
+    // Solve
     glp_iocp parm;
     glp_init_iocp(&parm);
     parm.presolve = GLP_ON;
-    parm.msg_lev = GLP_MSG_ERR;  // Only show errors
 
-    int status = glp_intopt(lp, &parm);
-
-    if (status != 0) {
-        printf("ERROR: GLPK solver failed with status %d\n", status);
-        glp_delete_prob(lp);
+    if (glp_intopt(lp, &parm) != 0) {
+        printf("MILP solver failed\n");
         return -1;
     }
 
-    // Check solution status
-    int sol_status = glp_mip_status(lp);
-    if (sol_status != GLP_OPT && sol_status != GLP_FEAS) {
-        printf("ERROR: No feasible solution found (status: %d)\n", sol_status);
-        glp_delete_prob(lp);
-        return -1;
-    }
-
-    // Extract solution
     *optimal_cost = glp_mip_obj_val(lp);
 
-    var_idx = 1;
+    // extract solution
     for (int f = 0; f < num_flights; f++) {
-        for (int r = 0; r < problem->num_routes_per_flight[f]; r++) {
-            double val = glp_mip_col_val(lp, var_idx);
-            if (val > 0.5) {  // Binary variable is 1
+        solution[f] = -1;
+        for (int r = 0; r < p->num_routes_per_flight[f]; r++) {
+            int v = get_variable_index(p, f, r);
+            if (glp_mip_col_val(lp, v) > 0.5)
                 solution[f] = r;
-            }
-            var_idx++;
         }
     }
 
-    // Print solution
-    printf("\n====================================\n");
-    printf("MILP SOLUTION\n");
-    printf("====================================\n");
-    printf("Optimal Cost: %.0f kg\n", *optimal_cost);
-    printf("Routes: [");
-    for (int f = 0; f < num_flights; f++) {
-        printf("%d", solution[f]);
-        if (f < num_flights - 1) printf(", ");
-    }
-    printf("]\n");
-
-    // Cleanup
     glp_delete_prob(lp);
-
     return 0;
-}
-
-/**
- * Compare MILP vs Greedy
- */
-void compare_milp_greedy(ProblemInstance *problem) {
-    printf("\n====================================\n");
-    printf("COMPARISON: GREEDY vs MILP\n");
-    printf("====================================\n\n");
-
-    // Greedy solution
-    int greedy_solution[MAX_FLIGHTS];
-    double greedy_cost = 0;
-
-    for (int f = 0; f < problem->num_flights; f++) {
-        int best_route = 0;
-        double min_fuel = problem->routes[f][0].fuel_cost;
-
-        for (int r = 1; r < problem->num_routes_per_flight[f]; r++) {
-            if (problem->routes[f][r].fuel_cost < min_fuel) {
-                min_fuel = problem->routes[f][r].fuel_cost;
-                best_route = r;
-            }
-        }
-
-        greedy_solution[f] = best_route;
-        greedy_cost += min_fuel;
-    }
-
-    printf("GREEDY:\n");
-    printf("  Routes: [");
-    for (int f = 0; f < problem->num_flights; f++) {
-        printf("%d", greedy_solution[f]);
-        if (f < problem->num_flights - 1) printf(", ");
-    }
-    printf("]\n");
-    printf("  Cost: %.0f kg (fuel only, ignores conflicts)\n\n", greedy_cost);
-
-    // MILP solution
-    int milp_solution[MAX_FLIGHTS];
-    double milp_cost = 0;
-
-    int result = solve_milp(problem, milp_solution, &milp_cost);
-
-    if (result == 0) {
-        printf("\n====================================\n");
-        printf("MILP is %.0f kg better than Greedy\n", greedy_cost - milp_cost);
-        printf("(MILP finds conflict-free routes)\n");
-        printf("====================================\n");
-    }
 }

@@ -29,7 +29,7 @@ try:
             i, j, value = int(parts[0]), int(parts[1]), float(parts[2])
             cost_matrix[i][j] = value
     
-    print(f"  Loaded {matrix_size}×{matrix_size} matrix")
+    print(f"  Loaded {matrix_size}*{matrix_size} matrix")
     
 except FileNotFoundError:
     print("   ERROR: Run ./milp_simulator.o first!")
@@ -38,7 +38,7 @@ except FileNotFoundError:
 NUM_FLIGHTS = 5
 ROUTES_PER_FLIGHT = matrix_size // NUM_FLIGHTS
 
-print(f"   Problem: {NUM_FLIGHTS} flights × {ROUTES_PER_FLIGHT} routes")
+print(f"   Problem: {NUM_FLIGHTS} flights * {ROUTES_PER_FLIGHT} routes")
 
 # MILP greedy baseline (picks cheapest, ignores conflicts)
 print("\n[2] Computing MILP greedy solution...")
@@ -208,7 +208,7 @@ def objective(params):
     gamma, beta = params
     cost = run_circuit(gamma, beta)
     if iteration[0] <= 10:
-        print(f"  Iteration {iteration[0]:2d}: γ={gamma:.3f}, β={beta:.3f} → {cost:,.0f} kg")
+        print(f"  Iteration {iteration[0]:2d}: γ={gamma:.3f}, β={beta:.3f} -> {cost:,.0f} kg")
     return cost
 
 result = minimize(
@@ -271,7 +271,7 @@ for i, (bitstring, count) in enumerate(sorted_counts[:5]):
     clean = bitstring.replace(' ', '')
     formatted = ' '.join([clean[j:j+3] for j in range(0, len(clean), 3)])
     
-    print(f"{i+1}. {formatted} → {routes} | {cost:,.0f} kg | {prob:.1f}%")
+    print(f"{i+1}. {formatted} -> {routes} | {cost:,.0f} kg | {prob:.1f}%")
 
 print(f"\nBest QAOA solution:")
 print(f"    Routes:    {qaoa_routes}")
@@ -330,7 +330,7 @@ MILP+QAOA:
 QAOA IMPROVEMENT:
   Saved: {milp_total - qaoa_total:,.0f} kg
   Percent: {(milp_total - qaoa_total)/milp_total*100:.1f}%
-  Conflict Reduction: {milp_conflicts} → {qaoa_conflicts}
+  Conflict Reduction: {milp_conflicts} -> {qaoa_conflicts}
 """
 
 print("\n" + "="*90)

@@ -497,13 +497,6 @@ int generate_alternative_routes(ProblemInstance *problem, int flight_idx, int nu
     return problem->num_routes_per_flight[flight_idx];
 }
 
-//Artificial Conflicts for now 
-//For each flight N, it takes the second-last waypoint from Flight Ns Route 0 and 
-//inserts that waypoint into the second position of Flight N1s Route 0. e.g 
-//Flight 1 -> A->B->C->D
-//Flight2 -> F->G->H->I
-//fucntion will make flight 2 path t  go via B new route F2: F->A->GHI
-//for Route 0 of every plane    
 // Build cost matrix for QUBO encoding
 
 void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matrix_size) {

@@ -1,0 +1,20 @@
+MILP vs MILP+QAOA Comparison Results
+======================================
+
+Problem: 5 flights * 5 routes
+
+MILP (Greedy, Local Optimization):
+  Routes: [0, 0, 0, 0, 0]
+  Fuel: 58,441 kg
+  Conflicts: 3 (penalty: 30,000 kg)
+  TOTAL: 88,441 kg
+
+MILP + QAOA (Global Quantum Optimization):
+  Routes: [0, 0, 0, 1, 0]
+  Fuel: 58,827 kg
+  Conflicts: 1 (penalty: 10,000 kg)
+  TOTAL: 68,827 kg
+
+Quantum Enhancement: 19,614 kg (+22.2%)
+
+Status: QAOA wins
