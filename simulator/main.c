@@ -4,6 +4,7 @@
 */
 #include "data_structures.h"
 
+#include "route_export_astar.c"
 
 
 int main() {
@@ -79,6 +80,9 @@ for (int i = 0; i < problem.num_waypoints; i++) {
     printf("Cost matrix size: %d x %d\n", matrix_size, matrix_size);
     printf("\n on this matrix now quantum!\n");
     
+//export_routes_as_txt(&problem);
+
+export_all_routes(&problem, "output/all_routes.txt", problem.waypoints);
 
 free(cost_matrix);
     return 0;

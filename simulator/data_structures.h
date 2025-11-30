@@ -105,5 +105,10 @@ int astar_find_route_with_weather(ProblemInstance *problem, int origin_idx, int 
 int solve_milp(ProblemInstance *problem, int *solution, double *optimal_cost);
 void compare_milp_greedy(ProblemInstance *problem);
 int find_waypoint_index(ProblemInstance *problem, const char *id);
+void export_all_routes(ProblemInstance *problem, const char *filename, Waypoint *waypoints);
+
+// forward declaration
+int run_milp_weather(ProblemInstance *);
+int solve_milp_with_glpk(ProblemInstance *);
 
 #endif

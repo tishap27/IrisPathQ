@@ -145,3 +145,10 @@ void print_route(Route *route, Waypoint *waypoints) {
     printf("Distance: %.2f nm, Fuel: %.2f kg, Time: %.2f hrs\n",
            route->total_distance, route->fuel_cost, route->time_cost);
 }
+int find_waypoint_index(ProblemInstance *p, const char *id) {
+    for (int i = 0; i < p->num_waypoints; i++) {
+        if (strcmp(p->waypoints[i].id, id) == 0)
+            return i;
+    }
+    return -1;
+}

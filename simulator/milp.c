@@ -1,33 +1,33 @@
 /**
  * MILP Solver for Route Optimization (GLPK)
-
  */
 
 #include "data_structures.h"
 #include <glpk.h>
 
-// conflict check: share >=3 consecutive waypoints -> conflict
+// Conflict if routes share any INTERMEDIATE waypoint (NOT origin or destination)
 int routes_conflict(Route *a, Route *b) {
-    int max_consec = 0;
 
-    for (int i = 0; i < a->num_waypoints - 1; i++) {
-        for (int j = 0; j < b->num_waypoints - 1; j++) {
-            int consec = 0;
+    // skip trivial routes
+    if (a->num_waypoints <= 2 || b->num_waypoints <= 2)
+        return 0;
 
-            while (i + consec < a->num_waypoints &&
-                   j + consec < b->num_waypoints &&
-                   a->waypoint_indices[i + consec] ==
-                   b->waypoint_indices[j + consec]) {
-                consec++;
+    // indices: 0 = origin, last = destination → skip both
+    int a_last = a->num_waypoints - 1;
+    int b_last = b->num_waypoints - 1;
+
+    for (int i = 1; i < a_last; ++i) {
+        for (int j = 1; j < b_last; ++j) {
+            if (a->waypoint_indices[i] == b->waypoint_indices[j]) {
+                return 1;   // conflict
             }
-
-            if (consec > max_consec)
-                max_consec = consec;
         }
     }
 
-    return (max_consec >= 3);
+    return 0; // safe
 }
+
+
 
 int get_variable_index(ProblemInstance *p, int f, int r) {
     int idx = 1;
@@ -104,33 +104,54 @@ int solve_milp(ProblemInstance *p, int *solution, double *optimal_cost) {
                     if (routes_conflict(&p->routes[f1][r1], &p->routes[f2][r2]))
                         conflict_count++;
 
-    glp_add_rows(lp, conflict_count);
-    int cur = row;
-    int added = 0;
+    printf("Found %d route conflicts\n", conflict_count);
+    
+    // Debug: Print which routes conflict
+    if (conflict_count > 0) {
+        printf("\nConflicting route pairs:\n");
+        for (int f1 = 0; f1 < num_flights; f1++)
+            for (int r1 = 0; r1 < p->num_routes_per_flight[f1]; r1++)
+                for (int f2 = f1 + 1; f2 < num_flights; f2++)
+                    for (int r2 = 0; r2 < p->num_routes_per_flight[f2]; r2++)
+                        if (routes_conflict(&p->routes[f1][r1], &p->routes[f2][r2])) {
+                            printf("  Flight %d Route %d <-> Flight %d Route %d\n", 
+                                   f1, r1, f2, r2);
+                        }
+        printf("\n");
+    }
 
-    for (int f1 = 0; f1 < num_flights; f1++)
-        for (int r1 = 0; r1 < p->num_routes_per_flight[f1]; r1++)
-            for (int f2 = f1 + 1; f2 < num_flights; f2++)
-                for (int r2 = 0; r2 < p->num_routes_per_flight[f2]; r2++)
-                    if (routes_conflict(&p->routes[f1][r1],
-                                        &p->routes[f2][r2])) {
+    // ONLY add conflict constraints if there are any conflicts
+    if (conflict_count > 0) {
+        glp_add_rows(lp, conflict_count);
+        int cur = row;
+        int added = 0;
 
-                        int v1 = get_variable_index(p, f1, r1);
-                        int v2 = get_variable_index(p, f2, r2);
+        for (int f1 = 0; f1 < num_flights; f1++)
+            for (int r1 = 0; r1 < p->num_routes_per_flight[f1]; r1++)
+                for (int f2 = f1 + 1; f2 < num_flights; f2++)
+                    for (int r2 = 0; r2 < p->num_routes_per_flight[f2]; r2++)
+                        if (routes_conflict(&p->routes[f1][r1],
+                                            &p->routes[f2][r2])) {
 
-                        int ind[3] = {0, v1, v2};
-                        double val[3] = {0, 1.0, 1.0};
+                            int v1 = get_variable_index(p, f1, r1);
+                            int v2 = get_variable_index(p, f2, r2);
 
-                        char rn[64];
-                        sprintf(rn, "conflict_%d_%d__%d_%d", f1, r1, f2, r2);
+                            int ind[3] = {0, v1, v2};
+                            double val[3] = {0, 1.0, 1.0};
 
-                        glp_set_row_name(lp, cur, rn);
-                        glp_set_row_bnds(lp, cur, GLP_UP, 0.0, 1.0);
-                        glp_set_mat_row(lp, cur, 2, ind, val);
+                            char rn[64];
+                            sprintf(rn, "conflict_%d_%d__%d_%d", f1, r1, f2, r2);
 
-                        cur++;
-                        added++;
-                    }
+                            glp_set_row_name(lp, cur, rn);
+                            glp_set_row_bnds(lp, cur, GLP_UP, 0.0, 1.0);
+                            glp_set_mat_row(lp, cur, 2, ind, val);
+
+                            cur++;
+                            added++;
+                        }
+    } else {
+        printf("No conflicts found - all routes can be selected independently\n");
+    }
 
     // Solve
     glp_iocp parm;
@@ -139,6 +160,7 @@ int solve_milp(ProblemInstance *p, int *solution, double *optimal_cost) {
 
     if (glp_intopt(lp, &parm) != 0) {
         printf("MILP solver failed\n");
+        glp_delete_prob(lp);
         return -1;
     }
 
@@ -156,4 +178,20 @@ int solve_milp(ProblemInstance *p, int *solution, double *optimal_cost) {
 
     glp_delete_prob(lp);
     return 0;
+}
+
+int solve_milp_with_glpk(ProblemInstance *p) {
+    double obj;
+    int solution[p->num_flights];
+    
+    int status = solve_milp(p, solution, &obj);
+
+    if (status == 0) {
+        printf("\nMILP objective = %.2f kg\n", obj);
+        for (int f = 0; f < p->num_flights; f++) {
+            printf("Flight %d selects Route %d\n", f, solution[f]);
+        }
+    }
+
+    return status;
 }

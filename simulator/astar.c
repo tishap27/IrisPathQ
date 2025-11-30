@@ -797,3 +797,51 @@ int astar_find_route_with_weather(ProblemInstance *problem, int origin_idx, int 
     
     return 0;
 }
+
+void export_all_routes(ProblemInstance *problem, const char *filename, Waypoint *wps) {
+    FILE *fp = fopen(filename, "w");
+    if (!fp) {
+        printf("ERROR: Could not open %s for writing!\n", filename);
+        return;
+    }
+
+    fprintf(fp, "============================\n");
+    fprintf(fp, "   ROUTE EXPORT\n");
+    fprintf(fp, "============================\n\n");
+
+    for (int f = 0; f < problem->num_flights; f++) {
+        Flight *flight = &problem->flights[f];
+
+        fprintf(fp, "FLIGHT %s (%s → %s)\n",
+                flight->flight_id, flight->origin, flight->destination);
+
+        int num_routes = problem->num_routes_per_flight[f];
+
+        for (int r = 0; r < num_routes; r++) {
+            Route *route = &problem->routes[f][r];
+            fprintf(fp, "ROUTE %d: ", r);
+
+            // Waypoint path
+            for (int i = 0; i < route->num_waypoints; i++) {
+                fprintf(fp, "%s ", wps[route->waypoint_indices[i]].id);
+            }
+
+            // Route metrics
+            fprintf(fp,
+                "\n  Distance: %.2f nm\n"
+                "  Fuel: %.2f kg\n"
+                "  Time: %.2f hrs\n",
+                route->total_distance,
+                route->fuel_cost,
+                route->time_cost
+            );
+
+            fprintf(fp, "\n");
+        }
+
+        fprintf(fp, "END\n\n");
+    }
+
+    fclose(fp);
+    printf("All routes exported to %s\n", filename);
+}

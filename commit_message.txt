@@ -1,9 +1,6 @@
-v0.4: Classical MILP Baseline + A* Integration Cleanup
+Integrate weather-aware A* to MILP 
 
-- Updated A* (astar.c) and data_structures.h for consistent route/flight structs
-- Refactored MILP solver (milp.c) and milp_main.c to produce correct baseline MILP results
-- Now MILP-QAOA Python interface (milp_qaoa.py) with updated cost matrix format
-- Added missing MILP components into jupyter/v0.4 (milp_main.c, milp_qaoa.py)
-- Exported initial MILP cost matrices for verification (cost_matrix_milp.txt, full_matrix_milp.txt)
-- Added initial route_generator.c for route creation without weather
-- Now has correct MILP baseline
+- Added  milp_main.c to fully combine A* weather routing and MILP solver
+- Added route_export_astar.c and milp_weather_txt.c for TXT parsing and matrix export
+- Updated astar.c, utils.c, data_structures.h for unified flow
+- Added weather_milp.py 	
