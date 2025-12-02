@@ -1,0 +1,16 @@
+====================================================================================================
+IRISPATHQ: COMPLETE COMPARISON RESULTS
+====================================================================================================
+
+Method                        Greedy (kg)     TRUE MILP (kg)       QAOA (kg)    Best Gain
+----------------------------------------------------------------------------------------------------
+A* Routes                        53,659.0                N/A        47,387.7      6,271.3
+MILP Routes                      50,119.0           50,119.0        50,119.0          0.0
+
+====================================================================================================
+
+KEY FINDINGS:
+- A* routes: Best base quality (free pathfinding)
+- MILP routes: Include regulatory overhead but more realistic
+- QAOA: Provides 0.0% improvement on MILP routes
+- QAOA: Provides 11.7% improvement on A* routes
