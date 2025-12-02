@@ -544,8 +544,8 @@ void build_cost_matrix(ProblemInstance *problem, double **cost_matrix, int *matr
                     Route *r2 = &problem->routes[flight_j][route_j];
                     
                     int conflict = 0;
-                    for (int w1 = 0; w1 < r1->num_waypoints; w1++) {
-                        for (int w2 = 0; w2 < r2->num_waypoints; w2++) {
+                    for (int w1 = 1; w1 < r1->num_waypoints - 1; w1++) {
+                        for (int w2 = 1; w2 < r2->num_waypoints - 1; w2++) {
                             if (r1->waypoint_indices[w1] == r2->waypoint_indices[w2]) {
                                 conflict = 1;
                                 break;
