@@ -20,7 +20,7 @@ int main() {
     printf("Loading data...\n");
     load_flights("data/flights.csv", &problem);
     load_waypoints("data/waypoints.csv", &problem);
-    load_weather("data/weatherTS3.csv", &problem);
+    load_weather("data/weatherTS2.csv", &problem);
     
     //DEBUG
     printf("\n=== STORM CHECK ===\n");

@@ -197,8 +197,39 @@ int main() {
     printf("Cost matrix size: %d x %d\n", matrix_size, matrix_size);
     printf("\nRun milp_qaoa.py to compare MILP vs MILP+QAOA\n");
 
-    // Run MILP comparison
-    //compare_milp_greedy(&problem);
+    printf("\n====================================\n");
+printf("RUNNING TRUE MILP SOLVER (GLPK)\n");
+printf("====================================\n\n");
+
+int milp_solution[MAX_FLIGHTS];
+double milp_cost;
+
+if (solve_milp(&problem, milp_solution, &milp_cost) == 0) {
+    printf("\n✓ TRUE MILP Solution (conflict-free by constraints):\n");
+    printf("  Routes: [");
+    for (int f = 0; f < problem.num_flights; f++) {
+        printf("%d%s", milp_solution[f], f < problem.num_flights-1 ? ", " : "");
+    }
+    printf("]\n");
+    printf("  Total Cost: %.2f kg (no conflicts!)\n", milp_cost);
+    
+    // Save MILP solution to file for Python to read
+    FILE *fp = fopen("output/milp_solution.txt", "w");
+    if (fp) {
+        fprintf(fp, "%.2f\n", milp_cost);
+        for (int f = 0; f < problem.num_flights; f++) {
+            fprintf(fp, "%d\n", milp_solution[f]);
+        }
+        fclose(fp);
+        printf("  Saved to output/milp_solution.txt\n");
+    }
+} else {
+    printf("\n✗ MILP solver failed\n");
+}
+
+printf("\n====================================\n");
+printf("Now run: python UnifiedComparison.py\n");
+printf("====================================\n\n");
 
     free(cost_matrix);
     return 0;
