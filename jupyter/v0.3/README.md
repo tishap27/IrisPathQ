@@ -134,12 +134,6 @@ pip install qiskit qiskit-aer numpy scipy matplotlib
 
 ```
 
----
-
-## References
-
-ToDo
-
 
 ---
 
