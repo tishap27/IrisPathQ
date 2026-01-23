@@ -185,7 +185,5 @@ QAOA avoids the conflict by exploring globally and picking Combination 3.
 - Use a full CSV of all Canadian airports and waypoints as a routing base  
 - Integrate real-time weather data (rather than a static CSV), so route planning uses live weather updates  
 - Add realistic airway networks and altitude choices  
-- Real quantum hardware runs :) 
-- Scaling to 20+ flights, 100+ waypoints :) 
+- Scaling to 20+ flights, 100+ waypoints
 
-to be continued/corrected...
