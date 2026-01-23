@@ -54,8 +54,6 @@ for each flight:
 - **10-qubit circuit** (2 qubits per flight)
 - **Parameterized gates** with variational parameters
 
-**Circuit Architecture**:
-ToDo
 
 **Gate Functions**:
 - **H (Hadamard)**: Initialize superposition - explore all routes
@@ -230,12 +228,6 @@ SUCCESS: Quantum matched classical!
 ```bash
 pip install qiskit qiskit-aer numpy scipy
 ```
-
----
-
-## References
-
-ToDo
 
 
 ---
