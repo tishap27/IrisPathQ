@@ -1,6 +1,0 @@
-Integrate weather-aware A* to MILP 
-
-- Added  milp_main.c to fully combine A* weather routing and MILP solver
-- Added route_export_astar.c and milp_weather_txt.c for TXT parsing and matrix export
-- Updated astar.c, utils.c, data_structures.h for unified flow
-- Added weather_milp.py 	
