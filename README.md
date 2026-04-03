@@ -187,3 +187,8 @@ QAOA avoids the conflict by exploring globally and picking Combination 3.
 - Add realistic airway networks and altitude choices  
 - Scaling to 20+ flights, 100+ waypoints
 
+##  Contact
+
+**Tisha Patel**
+- **GitHub:** [@tishap27](https://github.com/tishap27)
+- **Email:** [tishaapatel08@gmail.com](mailto:tishaapatel08@gmail.com)
